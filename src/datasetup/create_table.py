@@ -1,6 +1,9 @@
 import pandas as pd
 import os
-from  connection import create_connection
+import sys
+from os import path
+sys.path.append(path.dirname( path.dirname( path.abspath(__file__))))
+from database import create_connection
 
 schema_name = "udfs"
 
