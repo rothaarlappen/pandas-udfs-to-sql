@@ -13,7 +13,9 @@ def order_year(orderdate: str) -> int:
 def order_priority_numeric(orderpriority: str) -> int:
     return int (orderpriority[0])
 
-df = pd.read_sql("SELECT * FROM udfs.orders_tpch LIMIT 100", create_connection())
+conn = create_connection()
+
+df = pd.read_sql("SELECT * FROM udfs.orders_tpch LIMIT 100", conn)
 
 df["comment_length"] = df.apply(lambda row : commment_len(row["comment"]), axis=1)
 df["order_year"] = df.apply(lambda row : order_year(row["orderdate"]), axis=1)
