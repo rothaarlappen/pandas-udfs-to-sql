@@ -5,9 +5,9 @@ sys.path.append(path.dirname( path.dirname( path.abspath(__file__))))
 from database import create_connection
 
 
-# The Idea of our project is, that the following two functions are semantically equivalent 
+# The Idea of our project is, that the following two functions are semantically equivalent
 # Moving the computation/code to the server - like it's done in the second method reduces use
-# of client-side resources, hence, improves performance of whole pipeline. 
+# of client-side resources, hence, improves performance of whole pipeline.
 
 def original_pandas_code():
     conn = create_connection()
@@ -31,7 +31,28 @@ def move_udf_to_database():
     $$ LANGUAGE plpython3u;
     """
     )
-    conn.execute("ALTER TABLE udfs.orders_tpch ADD comment_length int")
-    conn.execute("UPDATE udfs.orders_tpch SET comment_length = comment_length(comment)")
-    df = pd.read_sql("SELECT * FROM udfs.orders_tpch LIMIT 100", conn)  
+
+    # Persist changes (comes with side-effects... executing script multiple times is tricky...)
+    # conn.execute("ALTER TABLE udfs.orders_tpch ADD comment_length int")
+    # conn.execute("UPDATE udfs.orders_tpch SET comment_length = comment_length(comment)")
+
+    # Create View:
+    # conn.execute("CREATE VIEW views.df_preprocessed AS SELECT *, comment_length(comment_length) as comment_length FROM udfs.orders_tpch LIMIT 100" );
+    # df = pd.read_sql("SELECT * FROM df_preprocessed")
+
+    # Probably best approach for interoperability as we don't change data....
+    df = pd.read_sql("SELECT *, comment_length(comment_length) as comment_length FROM udfs.orders_tpch LIMIT 100", conn)
     print(df.head())
+
+# WHAT DO WE BENCHMARK?
+
+# comparison to baseline (actual python, ...grizzly, aida, ...)
+# What:
+# - own examples
+
+# How does it scale
+# -> Edge cases where it doesn't make any sense
+
+# df_angry_customer = df.filter(onlyOneStar)
+# can be translated to
+# df_angry_customer = pd.read_sql("SELECT * FROM udfs.orders WHERE onlyOneStar(comment) = 1")

@@ -7,7 +7,7 @@ from database import create_connection
 def commment_len(comment: str) -> int:
     return str(len(comment))
 
-def order_year(orderdate: str) -> int: 
+def order_year(orderdate: str) -> int:
     return orderdate[:4]
 
 def order_priority_numeric(orderpriority: str) -> int:
