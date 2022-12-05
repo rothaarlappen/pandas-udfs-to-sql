@@ -4,7 +4,6 @@ from os import path
 sys.path.append(path.dirname( path.dirname( path.abspath(__file__))))
 from database import create_connection
 
-
 # The Idea of our project is, that the following two functions are semantically equivalent
 # Moving the computation/code to the server - like it's done in the second method reduces use
 # of client-side resources, hence, improves performance of whole pipeline.
@@ -15,7 +14,7 @@ def original_pandas_code():
     def commment_len(comment: str) -> int:
         return len(comment)
 
-    df = pd.read_sql("SELECT * FROM udfs.orders_tpch LIMIT 100", conn)
+    df = pd.read_sql("SELECT * FROM udfs.orders_tpch", conn)
 
     df["comment_length"] = df.apply(lambda row : commment_len(row["comment"]), axis=1)
     print(df.head())
@@ -41,7 +40,7 @@ def move_udf_to_database():
     # df = pd.read_sql("SELECT * FROM df_preprocessed")
 
     # Probably best approach for interoperability as we don't change data....
-    df = pd.read_sql("SELECT *, comment_length(comment_length) as comment_length FROM udfs.orders_tpch LIMIT 100", conn)
+    df = pd.read_sql("SELECT *, comment_length(comment) as comment_length FROM udfs.orders_tpch", conn)
     print(df.head())
 
 # WHAT DO WE BENCHMARK?

@@ -1,8 +1,8 @@
-import pandas as pd
 import sys
 from os import path
 sys.path.append(path.dirname( path.dirname( path.abspath(__file__))))
 from database import create_connection
+import pandas as pd
 
 def commment_len(comment: str) -> int:
     return str(len(comment))
