@@ -4,7 +4,7 @@ import argparse
 import astunparse
 import json
 
-
+# TODO: Wrapper around that, which checks if type is actually supported
 # Pyhton to Postgres
 datatypeconversion = {
     "str" : "text",
@@ -18,6 +18,7 @@ class UdfTransformer(NodeTransformer):
             return Assign()
         return node
 
+# TODO: @Fabian what do you think of such Classes that contain information about parsing and "unparsing" of ast? 
 class ApplyOperator():
     def __init__(self, assign: Assign):
         self.new_column = assign.targets[0].slice.value
@@ -25,7 +26,7 @@ class ApplyOperator():
         self.invoked_function = assign.value.args[0].body.func.id
     def __str__(self):
         return json.dumps({"newcol":self.new_column, "passedcol": self.passed_columns, "invoked_function": self.invoked_function})
-    # probably needs a renaming
+    # this method probably needs a renaming
     def to_sql_projection(self):
         return f"{self.invoked_function}({self.passed_columns}) AS {self.new_column}"
 
@@ -36,12 +37,6 @@ def get_pandas_alias(programbody: List[stmt]) -> str:
             alias = thing.names[0].asname
             if name == "pandas":
                 return alias if alias else name
-
-def get_connection(programbody: List[stmt], pd: str) -> str:
-    return ""
-
-def function_def_to_postgres_udf(programbody, conn, used_functions) -> List[str]:
-    return
 
 def parse_python_code(filepath):
     program = None
@@ -54,7 +49,8 @@ def ast_to_file(program_ast, filepath):
     with open(filepath, "w") as file:
         file.write(astunparse.unparse(program_ast))
 
-
+# TODO: conn is hardcoded (should use the "global-connection" in program...)
+# TODO: should parse all arguments of FunctionDef-argumentlist
 def to_ast_that_craetes_udf(function_ast : FunctionDef, conn : str) -> Expr:
     name = function_ast.name
     args = function_ast.args
@@ -70,9 +66,6 @@ def to_ast_that_craetes_udf(function_ast : FunctionDef, conn : str) -> Expr:
 
     return udf_creating_ast
 
-def parse_invoked_functions_and_passed_columns(assignment : Assign) -> Dict[str,str]:
-    return 
-
 # weak limitation... should check for df.apply or something else...
 def contains_apply(assign: Assign) -> bool:
     try:
@@ -87,7 +80,9 @@ def convert(filepath, outpath):
     # print(pd)
 
     applyoperators : List[ApplyOperator] = []
-    dfloading : str = "df = pd.load_sql('SELECT * FROM table')"
+    
+    conn = "conn = createConncction()"
+    dfloading : str = "df = pd.load_sql('SELECT * FROM table', conn)"
     udf_definitions : List[str] = []
 
     for thing in program.body:
