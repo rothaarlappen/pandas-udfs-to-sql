@@ -45,8 +45,8 @@ def parse_python_code(filepath):
     assert program != None, "program should be parsed"
     return program
 
-def ast_to_file(program_ast, filepath):
-    with open(filepath, "w") as file:
+def append_ast_to_file(program_ast, filepath ="./out"):
+    with open(filepath, "a") as file:
         file.write(astunparse.unparse(program_ast))
 
 # TODO: conn is hardcoded (should use the "global-connection" in program...)
@@ -74,6 +74,16 @@ def contains_apply(assign: Assign) -> bool:
         # Antipattern it is...
         return False 
 
+def contains_read_sql(assign: Assign) -> bool:
+    try:
+        return assign.value.func.attr == "read_sql"
+    except:
+        # Antipattern it is...
+        return False 
+
+def read_sql_ast(sql: str, apply : List[ApplyOperator]) -> Assign:
+    return parse(sql)
+
 def convert(filepath, outpath):
     program = parse_python_code(filepath)
     # pd = get_pandas_alias(program.body)
@@ -81,21 +91,34 @@ def convert(filepath, outpath):
 
     applyoperators : List[ApplyOperator] = []
     
-    conn = "conn = createConncction()"
-    dfloading : str = "df = pd.load_sql('SELECT * FROM table', conn)"
+    # hardcoded because we can assume we get this one from switcheroo?
+    conn = "conn = create_connection()"
+    dfloading : str = "df = pd.load_sql('SELECT * FROM udfs.orders_tpch', conn)"
+    
     udf_definitions : List[str] = []
 
     for thing in program.body:
+        if isinstance(thing, Import):
+            append_ast_to_file(thing)
+        if isinstance(thing, Expr):
+            append_ast_to_file(thing)  
         if isinstance(thing, FunctionDef):
             udf = to_ast_that_craetes_udf(thing, "conn") 
-            udf_definitions.append(astunparse.unparse(udf))
+            append_ast_to_file(udf)
+            # udf_definitions.append(astunparse.unparse(udf))
 
         if isinstance(thing, Assign):
             if (contains_apply(thing)):
                 applyoperators.append(ApplyOperator(thing))
+            elif (contains_read_sql(thing)):
+                continue
+            else:
+                append_ast_to_file(thing)
             # print(astunparse.unparse(returns))
             # print(thing.args.args[0].annotation.id)
             # print(thing.returns)
+    append_ast_to_file(read_sql_ast(dfloading, applyoperators))
+
 
     # for apply in applyoperators:
     #     print(apply.to_sql_projection())
