@@ -1,12 +1,14 @@
 import pandas as pd
 import sys
 from os import path
-sys.path.append(path.dirname( path.dirname( path.abspath(__file__))))
+
+sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from database import create_connection
 
 # The Idea of our project is, that the following two functions are semantically equivalent
 # Moving the computation/code to the server - like it's done in the second method reduces use
 # of client-side resources, hence, improves performance of whole pipeline.
+
 
 def original_pandas_code():
     conn = create_connection()
@@ -16,13 +18,15 @@ def original_pandas_code():
 
     df = pd.read_sql("SELECT * FROM udfs.orders_tpch", conn)
 
-    df["comment_length"] = df.apply(lambda row : commment_len(row["comment"]), axis=1)
+    df["comment_length"] = df.apply(lambda row: commment_len(row["comment"]), axis=1)
     print(df.head())
+
 
 def move_udf_to_database():
     conn = create_connection()
 
-    conn.execute("""
+    conn.execute(
+        """
     CREATE OR REPLACE FUNCTION comment_length(comment text)
     RETURNS int
     AS $$
@@ -40,10 +44,16 @@ def move_udf_to_database():
     # df = pd.read_sql("SELECT * FROM df_preprocessed")
 
     # Probably best approach for interoperability as we don't change data....
-    df = pd.read_sql("SELECT *, comment_length(comment) as comment_length FROM udfs.orders_tpch", conn)
+    df = pd.read_sql(
+        "SELECT *, comment_length(comment) as comment_length FROM udfs.orders_tpch",
+        conn,
+    )
     print(df.head())
 
+
 # WHAT DO WE BENCHMARK?
+
+# Overhead of setup, network, etc.
 
 # comparison to baseline (actual python, ...grizzly, aida, ...)
 # What:
@@ -52,6 +62,11 @@ def move_udf_to_database():
 # How does it scale
 # -> Edge cases where it doesn't make any sense
 
+# Runtime (dissection (setup, communication, execution)), memory usage
+# context switches penalty (runtime evaluation)
+
 # df_angry_customer = df.filter(onlyOneStar)
 # can be translated to
 # df_angry_customer = pd.read_sql("SELECT * FROM udfs.orders WHERE onlyOneStar(comment) = 1")
+
+# TODO: look into containerized UDF execution (performance comparison?)
