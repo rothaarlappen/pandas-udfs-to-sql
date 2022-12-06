@@ -1,8 +1,10 @@
 import sys
 from os import path
-sys.path.append(path.dirname( path.dirname( path.abspath(__file__))))
+sys.path.append(path.dirname(path.dirname( path.abspath(__file__))))
 from database import create_connection
 import pandas as pd
+
+conn = create_connection()
 
 def commment_len(comment: str) -> int:
     return str(len(comment))
@@ -12,8 +14,6 @@ def order_year(orderdate: str) -> int:
 
 def order_priority_numeric(orderpriority: str) -> int:
     return int (orderpriority[0])
-
-conn = create_connection()
 
 df = pd.read_sql("SELECT * FROM udfs.orders_tpch LIMIT 100", conn)
 
