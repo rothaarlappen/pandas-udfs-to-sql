@@ -29,3 +29,26 @@ df["comment_length"] = df.apply(lambda row : commment_len(row["comment"]), axis=
 print(parse("""
 df["comment_length"] = df.apply(lambda row : commment_len(row["comment"]), axis=1)
 """).body[0].value.args[0].body.args[0].slice.value)
+
+
+
+
+# Get datatype of first argument of FunctionDef
+print(parse("""
+def commment_len(comment: str) -> int:
+    return str(len(comment))
+""").body[0].args.args[0].annotation.id)
+
+print(parse("""
+def commment_len(comment: str) -> int:
+    return str(len(comment))
+""").body[0].args.args[0].arg)
+
+# returntype of function
+print(parse("""
+def commment_len(comment: str) -> int:
+    return str(len(comment))
+""").body[0].returns.id)
+
+
+

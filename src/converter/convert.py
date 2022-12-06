@@ -4,6 +4,14 @@ import argparse
 import astunparse
 import json
 
+
+# Pyhton to Postgres
+datatypeconversion = {
+    "str" : "text",
+    "int" : "integer",
+    "bool" : "bool"
+}
+
 class UdfTransformer(NodeTransformer):
     def visit(self, node: AST) -> Any:
         if isinstance(node, Assign):
@@ -49,10 +57,11 @@ def ast_to_file(program_ast, filepath):
 
 def to_ast_that_craetes_udf(function_ast : FunctionDef, conn : str) -> Expr:
     name = function_ast.name
+    args = function_ast.args
 
     udf_creating_ast = parse(f"""conn.execute(\"\"\" 
-    CREATE OR REPLACE FUNCTION {name}({astunparse.unparse(function_ast.args)})
-    RETURNS int
+    CREATE OR REPLACE FUNCTION {name} ({args.args[0].arg} {datatypeconversion[args.args[0].annotation.id]})
+    RETURNS {datatypeconversion[function_ast.returns.id]}
     AS $$
         {astunparse.unparse(function_ast.body)}
     $$ LANGUAGE plpython3u;
@@ -79,7 +88,7 @@ def convert(filepath, outpath):
 
     applyoperators : List[ApplyOperator] = []
     dfloading : str = "df = pd.load_sql('SELECT * FROM table')"
-    udf_definitions : List[str]
+    udf_definitions : List[str] = []
 
     for thing in program.body:
         if isinstance(thing, FunctionDef):
@@ -93,8 +102,12 @@ def convert(filepath, outpath):
             # print(thing.args.args[0].annotation.id)
             # print(thing.returns)
 
-    for apply in applyoperators:
-        print(apply.to_sql_projection())
+    # for apply in applyoperators:
+    #     print(apply.to_sql_projection())
+
+    # for udf in udf_definitions:
+    #     print(udf)
+
 
     # print output....
     # 1. print all imports
