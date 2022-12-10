@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 
 databases = {
-    0 : "postgres", # Master-Database
+    0 : "idp", # first db.... 
     0.01:"tpch_sf_001",
     0.1 : "tpch_sf_01",
     1 : "tpch_sf_1"
