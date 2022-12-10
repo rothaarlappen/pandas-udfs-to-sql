@@ -14,10 +14,14 @@ import argparse
 import astunparse
 import json
 from collections.abc import Iterable
-from os import path
+from os import path, remove
+
 # TODO: Wrapper around that, which checks if type is actually supported
 # Pyhton to Postgres
 datatypeconversion = {"str": "text", "int": "integer", "bool": "bool"}
+
+def converted_file_path(originial_pipeline: str) -> str: 
+    return path.join(path.dirname(path.abspath(originial_pipeline)), "converted_" + path.basename(originial_pipeline)) 
 
 
 class UdfTransformer(NodeTransformer):
@@ -68,7 +72,7 @@ def parse_python_code(filepath):
     return program
 
 
-def append_ast_to_file(program_ast, filepath="./out"):
+def append_ast_to_file(program_ast, filepath):
     with open(filepath, "a") as file:
         file.write(astunparse.unparse(program_ast))
 
@@ -115,7 +119,7 @@ def read_sql_ast(sql: str, apply: List[ApplyOperator]) -> Assign:
 
 
 def get_sql_for_applyOperators(applyOperators: ApplyOperator):
-    return " ".join(
+    return ",".join(
         [applyOperator.to_sql_projection() for applyOperator in applyOperators]
     )
 
@@ -137,7 +141,11 @@ def return_used_variables(variables: List[str], ast_node: AST) -> List[str]:
     return hit_variables
 
 
-def convert(filepath, outpath):
+def convert_pipeline(filepath : str):
+    outpath = converted_file_path(filepath)
+    if path.isfile(outpath):
+        remove(outpath)
+
     program = parse_python_code(filepath)
     # pd = get_pandas_alias(program.body)
     # print(pd)
@@ -160,16 +168,17 @@ def convert(filepath, outpath):
                 continue
             # read detected, execute queries/applies to load df
             else:
-                functionCalls = get_sql_for_applyOperators(
+                projection = " *," + get_sql_for_applyOperators(
                     [
                         applyOperator
                         for applyOperator in applyoperators
                         if applyOperator.dataFrame == dataframe
                     ]
                 )
+
                 append_ast_to_file(
                     parse(
-                        f"""{dataframe} = pd.read_sql("SELECT *, {functionCalls} FROM udfs.orders_tpch LIMIT 100", conn)"""
+                        f"""{dataframe} = pd.read_sql("SELECT {projection} FROM udfs.orders_tpch LIMIT 100", conn)"""
                     ),
                     outpath,
                 )
@@ -190,6 +199,9 @@ def convert(filepath, outpath):
                 dataframes_in_db.add(thing.targets[0].id)
             else:
                 append_ast_to_file(thing, outpath)
+
+
+    return outpath
             # print(astunparse.unparse(returns))
             # print(thing.args.args[0].annotation.id)
             # print(thing.returns)
@@ -216,5 +228,4 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     file = args.filepath
-    converted_file = path.join(path.dirname(file), "converted_" + path.basename(file) ) 
-    convert(file, converted_file )
+    convert_pipeline(file)
