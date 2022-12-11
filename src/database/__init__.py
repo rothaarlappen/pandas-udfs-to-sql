@@ -1,34 +1,37 @@
-import os 
+import os
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 
-databases = {
-    0 : "tpch_sf_001", # first db.... 
-    0.01:"tpch_sf_001",
-    0.1 : "tpch_sf_01",
-    1 : "tpch_sf_1"
+DATABASES = {
+    0: "tpch_sf_001",  # first db....
+    0.01: "tpch_sf_001",
+    0.1: "tpch_sf_01",
+    1: "tpch_sf_1",
 }
 
 load_dotenv()
-pg_pw = os.getenv('pg_pw')
-pg_host = os.getenv('pg_host')
-pg_user = os.getenv("pg_user")
+PG_PW = os.getenv("pg_pw")
+PG_HOST = os.getenv("pg_host")
+PG_USER = os.getenv("pg_user")
 
 
-def psycopg2_connection_string(scalefactor : int = 0):
-    if scalefactor not in databases.keys():
+def psycopg2_connection_string(scalefactor: int = 0):
+    if scalefactor not in DATABASES.keys():
         raise ValueError("This TPC-H scalefactor is not supported")
-    pg_db = databases[scalefactor]
-    return f'postgresql+psycopg2://{pg_user}:{pg_pw}@{pg_host}/{pg_db}'
+    pg_db = DATABASES[scalefactor]
+    return f"postgresql+psycopg2://{PG_USER}:{PG_PW}@{PG_HOST}/{pg_db}"
 
-def psql_connectionstring(scalefactor : int = 0):
-    if scalefactor not in databases.keys():
+
+def psql_connectionstring(scalefactor: int = 0):
+    if scalefactor not in DATABASES.keys():
         raise ValueError("This TPC-H scalefactor is not supported")
-    pg_db = databases[scalefactor]
-    return f'postgresql://{pg_user}:{pg_pw}@{pg_host}/{pg_db}'
+    pg_db = DATABASES[scalefactor]
+    return f"postgresql://{PG_USER}:{PG_PW}@{PG_HOST}/{pg_db}"
 
-def create_connection(): 
+
+def create_connection():
     return create_engine(psycopg2_connection_string())
+
 
 TPCH_CREATE_TABLE_COMMAND = """
     CREATE TABLE NATION  ( N_NATIONKEY  INTEGER NOT NULL,
@@ -78,8 +81,8 @@ TPCH_CREATE_TABLE_COMMAND = """
                             O_ORDERSTATUS    CHAR(1) NOT NULL,
                             O_TOTALPRICE     DECIMAL(15,2) NOT NULL,
                             O_ORDERDATE      DATE NOT NULL,
-                            O_ORDERPRIORITY  CHAR(15) NOT NULL,  
-                            O_CLERK          CHAR(15) NOT NULL, 
+                            O_ORDERPRIORITY  CHAR(15) NOT NULL,
+                            O_CLERK          CHAR(15) NOT NULL,
                             O_SHIPPRIORITY   INTEGER NOT NULL,
                             O_COMMENT        VARCHAR(79) NOT NULL);
 
