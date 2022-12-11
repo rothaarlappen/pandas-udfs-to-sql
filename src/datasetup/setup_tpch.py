@@ -29,6 +29,11 @@ def setup(scalefactors : List[float], tables : List[str]):
         print(f"Creating database {dbname}")
         execute_sql(f"DROP DATABASE {dbname} WITH (FORCE);", master_connstring)
         execute_sql(f"CREATE DATABASE {dbname};", master_connstring)
+        
+        db_connstring = psql_connectionstring(sf) # this database should exist now 
+        execute_sql(f"CREATE EXTENSION IF NOT EXISTS plpython3u", db_connstring) # we create python extension to allow for python UDFs
+
+
 
     # fill with tpc-h data
     for sf in scalefactors:
