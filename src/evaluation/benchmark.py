@@ -26,11 +26,14 @@ def time_pipeline_execution(converted_pipeline : str):
 def main():
     for pipeline in pipelines: 
         pipeline = path.join(pipeline_directory, pipeline)
-        converted_pipeline = convert.convert_pipeline(pipeline)
+        (setup_file, pipeline_file) = convert.convert_pipeline(pipeline)
         
+        print(setup_file, pipeline_file)
+
+        time_pipeline_execution(setup_file)
+        time_pipeline_execution(pipeline_file)
         time_pipeline_execution(pipeline)
-        time_pipeline_execution(converted_pipeline)
-        
+
 if __name__ == '__main__':
     main()
     
