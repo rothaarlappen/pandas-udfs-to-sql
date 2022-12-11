@@ -9,7 +9,7 @@ from ast import (
     Expr,
     ImportFrom,
 )
-from typing import Any, List
+from typing import Any, List, Tuple
 import argparse
 import astunparse
 import json
@@ -18,10 +18,15 @@ from os import path, remove
 
 # TODO: Wrapper around that, which checks if type is actually supported
 # Pyhton to Postgres
-datatypeconversion = {"str": "text", "int": "integer", "bool": "bool"}
+datatypeconversion = {"str": "text", "int": "integer", "bool": "bool", "Timestamp" : "date"}
 
-def converted_file_path(originial_pipeline: str) -> str: 
-    return path.join(path.dirname(path.abspath(originial_pipeline)), "converted_" + path.basename(originial_pipeline)) 
+def converted_file_path(originial_pipeline: str) -> Tuple[str, str]: 
+    setup_file = "converted_setup_"+ path.basename(originial_pipeline)
+    pipeline_file = "converted_"+ path.basename(originial_pipeline)
+    dir = path.dirname(path.abspath(originial_pipeline))
+    file1 = path.join(dir, setup_file)
+    file2 = path.join(dir, pipeline_file)
+    return (file1, file2)
 
 
 class UdfTransformer(NodeTransformer):
@@ -71,6 +76,10 @@ def parse_python_code(filepath):
     assert program != None, "program should be parsed"
     return program
 
+
+def append_ast_to_files(program_ast, filepaths: List[str]):
+    for file in filepaths:
+        append_ast_to_file(program_ast, file)
 
 def append_ast_to_file(program_ast, filepath):
     with open(filepath, "a") as file:
@@ -142,13 +151,18 @@ def return_used_variables(variables: List[str], ast_node: AST) -> List[str]:
 
 
 def convert_pipeline(filepath : str):
-    outpath = converted_file_path(filepath)
-    if path.isfile(outpath):
-        remove(outpath)
+    outpaths = converted_file_path(filepath)
+
+    setup_path = outpaths[0]
+    pipeline_path = outpaths[1]
+
+
+    for outpath in outpaths:
+        if path.isfile(outpath):
+            remove(outpath)
 
     program = parse_python_code(filepath)
-    # pd = get_pandas_alias(program.body)
-    # print(pd)
+
     dataframes_in_db = set(["df"])
     applyoperators: List[ApplyOperator] = []
 
@@ -178,18 +192,22 @@ def convert_pipeline(filepath : str):
 
                 append_ast_to_file(
                     parse(
-                        f"""{dataframe} = pd.read_sql("SELECT {projection} FROM udfs.orders_tpch LIMIT 100", conn)"""
+                        f"""{dataframe} = pd.read_sql("SELECT {projection} FROM orders", conn)"""
                     ),
-                    outpath,
+                    pipeline_path,
                 )
 
         if isinstance(thing, Import) or isinstance(thing, ImportFrom):
-            append_ast_to_file(thing, outpath)
-        if isinstance(thing, Expr):
-            append_ast_to_file(thing, outpath)
+            append_ast_to_files(thing, outpaths)
+        if isinstance(thing, Expr): 
+            if (astunparse.unparse(thing).strip().startswith("sys")): # We should probably check if expression needs df...... @Fabian? ^^
+                append_ast_to_files(thing, outpaths) # sys.path.append(path.dirname(path.dirname( path.abspath(__file__))))
+            else: 
+                append_ast_to_file(thing, pipeline_path)
+
         if isinstance(thing, FunctionDef):
             udf = to_ast_that_creates_udf(thing, "conn")
-            append_ast_to_file(udf, outpath)
+            append_ast_to_file(udf, setup_path)
             # udf_definitions.append(astunparse.unparse(udf))
 
         if isinstance(thing, Assign):
@@ -198,20 +216,10 @@ def convert_pipeline(filepath : str):
             elif contains_read_sql(thing):
                 dataframes_in_db.add(thing.targets[0].id)
             else:
-                append_ast_to_file(thing, outpath)
+                append_ast_to_files(thing, outpaths)
 
 
-    return outpath
-            # print(astunparse.unparse(returns))
-            # print(thing.args.args[0].annotation.id)
-            # print(thing.returns)
-    # append_ast_to_file(read_sql_ast(dfloading, applyoperators), outpath)
-
-    # for apply in applyoperators:
-    #     print(apply.to_sql_projection())
-
-    # for udf in udf_definitions:
-    #     print(udf)
+    return outpaths
 
     # print output....
     # 1. print all imports
