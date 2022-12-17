@@ -13,12 +13,13 @@ load_dotenv()
 PG_PW = os.getenv("pg_pw")
 PG_HOST = os.getenv("pg_host")
 PG_USER = os.getenv("pg_user")
+PG_SCALEFACTOR = float(os.getenv("pg_scalefactor") or 0)
 
 
 def psycopg2_connection_string(scalefactor: int = 0):
     if scalefactor not in DATABASES.keys():
         raise ValueError("This TPC-H scalefactor is not supported")
-    pg_db = DATABASES[scalefactor]
+    pg_db = DATABASES[PG_SCALEFACTOR]
     return f"postgresql+psycopg2://{PG_USER}:{PG_PW}@{PG_HOST}/{pg_db}"
 
 

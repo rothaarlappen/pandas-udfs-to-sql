@@ -1,6 +1,7 @@
 import sys
 import time
-from os import path, system
+from os import path
+from dotenv import set_key
 
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from converter import convert
@@ -15,16 +16,27 @@ pipeline_directory = path.join(
 pipelines = ["simple_pipeline.py"]
 
 
-def time_pipeline_execution(converted_pipeline: str):
-    start = time.time()
+def time_pipeline_execution(converted_pipeline: str, repetitions=10):
     f = StringIO()
-    with redirect_stdout(f):
-        for i in range(5):
-            subprocess.run("python " + converted_pipeline, stdout=subprocess.DEVNULL)
-    end = time.time()
-    time_lapsed = end - start
-
-    print(path.basename(converted_pipeline), " : ", time_lapsed)
+    for scale_factor in [0.01, 0.1, 1.0]:
+        set_key(".env", "pg_scalefactor", str(scale_factor))
+        times = []
+        for i in range(repetitions):
+            with redirect_stdout(f):
+                start = time.time()
+                subprocess.run(
+                    "python3 " + converted_pipeline,
+                    stdout=subprocess.DEVNULL,
+                    shell=True,
+                )
+                end = time.time()
+            time_lapsed = end - start
+            times.append(time_lapsed)
+        print(f"{path.basename(converted_pipeline)} @ {scale_factor} :  {times}")
+        print(
+            f"{path.basename(converted_pipeline)} @ {scale_factor} : {sum(times) / repetitions}"
+        )
+        print("")
 
 
 def main():
