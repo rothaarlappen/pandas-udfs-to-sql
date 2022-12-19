@@ -32,7 +32,7 @@ def print_and_log(
         log.write("\n")
 
 
-def time_pipeline_execution(converted_pipeline: str, repetitions=10):
+def time_pipeline_execution(converted_pipeline: str, repetitions=20):
     f = StringIO()
     for scale_factor in [0.01, 0.1, 1.0]:
         set_key(".env", "pg_scalefactor", str(scale_factor))
@@ -58,6 +58,9 @@ def main():
 
         print(setup_file, pipeline_file)
 
+        time_pipeline_execution(setup_file)
+        time_pipeline_execution(pipeline_file)
+        time_pipeline_execution(pipeline)
         time_pipeline_execution(setup_file)
         time_pipeline_execution(pipeline_file)
         time_pipeline_execution(pipeline)
