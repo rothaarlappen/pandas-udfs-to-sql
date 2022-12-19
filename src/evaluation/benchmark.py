@@ -16,6 +16,22 @@ pipeline_directory = path.join(
 pipelines = ["simple_pipeline.py"]
 
 
+def print_and_log(
+    times: list, converted_pipeline: str, scale_factor: float, repetitions: int
+):
+    print(f"{path.basename(converted_pipeline)} @ {scale_factor} :  {times}")
+    print(
+        f"{path.basename(converted_pipeline)} @ {scale_factor} : {sum(times) / repetitions}"
+    )
+    print("")
+    with open("benchmark.log", "a") as log:
+        log.write(f"{path.basename(converted_pipeline)} @ {scale_factor} :  {times}\n")
+        log.write(
+            f"{path.basename(converted_pipeline)} @ {scale_factor} : {sum(times) / repetitions}\n"
+        )
+        log.write("\n")
+
+
 def time_pipeline_execution(converted_pipeline: str, repetitions=10):
     f = StringIO()
     for scale_factor in [0.01, 0.1, 1.0]:
@@ -32,11 +48,7 @@ def time_pipeline_execution(converted_pipeline: str, repetitions=10):
                 end = time.time()
             time_lapsed = end - start
             times.append(time_lapsed)
-        print(f"{path.basename(converted_pipeline)} @ {scale_factor} :  {times}")
-        print(
-            f"{path.basename(converted_pipeline)} @ {scale_factor} : {sum(times) / repetitions}"
-        )
-        print("")
+        print_and_log(times, converted_pipeline, scale_factor, repetitions)
 
 
 def main():
