@@ -18,11 +18,17 @@ from os import path, remove
 
 # TODO: Wrapper around that, which checks if type is actually supported
 # Pyhton to Postgres
-datatypeconversion = {"str": "text", "int": "integer", "bool": "bool", "Timestamp" : "date"}
+datatypeconversion = {
+    "str": "text",
+    "int": "integer",
+    "bool": "bool",
+    "Timestamp": "date",
+}
 
-def converted_file_path(originial_pipeline: str) -> Tuple[str, str]: 
-    setup_file = "converted_setup_"+ path.basename(originial_pipeline)
-    pipeline_file = "converted_"+ path.basename(originial_pipeline)
+
+def converted_file_path(originial_pipeline: str) -> Tuple[str, str]:
+    setup_file = "converted_setup_" + path.basename(originial_pipeline)
+    pipeline_file = "converted_" + path.basename(originial_pipeline)
     dir = path.dirname(path.abspath(originial_pipeline))
     file1 = path.join(dir, setup_file)
     file2 = path.join(dir, pipeline_file)
@@ -82,6 +88,7 @@ def append_ast_to_files(program_ast, filepaths: List[str]):
     for file in filepaths:
         append_ast_to_file(program_ast, file)
 
+
 def append_ast_to_file(program_ast, filepath):
     with open(filepath, "a") as file:
         file.write(astunparse.unparse(program_ast))
@@ -99,7 +106,8 @@ def to_ast_that_creates_udf(function_ast: FunctionDef, conn: str) -> Expr:
     RETURNS {datatypeconversion[function_ast.returns.id]}
     AS $$
         {astunparse.unparse(function_ast.body)}
-    $$ LANGUAGE plpython3u;
+    $$ LANGUAGE plpython3u
+    PARALLEL SAFE;
     \"\"\")
     """
     )
@@ -151,12 +159,11 @@ def return_used_variables(variables: List[str], ast_node: AST) -> List[str]:
     return hit_variables
 
 
-def convert_pipeline(filepath : str):
+def convert_pipeline(filepath: str):
     outpaths = converted_file_path(filepath)
 
     setup_path = outpaths[0]
     pipeline_path = outpaths[1]
-
 
     for outpath in outpaths:
         if path.isfile(outpath):
@@ -200,10 +207,14 @@ def convert_pipeline(filepath : str):
 
         if isinstance(thing, Import) or isinstance(thing, ImportFrom):
             append_ast_to_files(thing, outpaths)
-        if isinstance(thing, Expr): 
-            if (astunparse.unparse(thing).strip().startswith("sys")): # We should probably check if expression needs df...... @Fabian? ^^
-                append_ast_to_files(thing, outpaths) # sys.path.append(path.dirname(path.dirname( path.abspath(__file__))))
-            else: 
+        if isinstance(thing, Expr):
+            if (
+                astunparse.unparse(thing).strip().startswith("sys")
+            ):  # We should probably check if expression needs df...... @Fabian? ^^
+                append_ast_to_files(
+                    thing, outpaths
+                )  # sys.path.append(path.dirname(path.dirname( path.abspath(__file__))))
+            else:
                 append_ast_to_file(thing, pipeline_path)
 
         if isinstance(thing, FunctionDef):
@@ -218,7 +229,6 @@ def convert_pipeline(filepath : str):
                 dataframes_in_db.add(thing.targets[0].id)
             else:
                 append_ast_to_files(thing, outpaths)
-
 
     return outpaths
 
