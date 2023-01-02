@@ -106,8 +106,7 @@ def to_ast_that_creates_udf(function_ast: FunctionDef, conn: str) -> Expr:
     RETURNS {datatypeconversion[function_ast.returns.id]}
     AS $$
         {astunparse.unparse(function_ast.body)}
-    $$ LANGUAGE plpython3u
-    PARALLEL SAFE;
+    $$ LANGUAGE plpython3u;
     \"\"\")
     """
     )
