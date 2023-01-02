@@ -13,7 +13,7 @@ pipeline_directory = path.join(
     path.dirname(path.dirname(path.abspath(__file__))), "testqueries"
 )
 
-pipelines = ["medium_pipeline.py"]
+pipelines = ["very_simple_pipeline.py", "simple_pipeline.py", "medium_pipeline.py"]
 
 
 def print_and_log(
