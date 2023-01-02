@@ -63,9 +63,6 @@ def main():
         time_pipeline_execution(setup_file)
         time_pipeline_execution(pipeline_file)
         time_pipeline_execution(pipeline)
-        time_pipeline_execution(setup_file)
-        time_pipeline_execution(pipeline_file)
-        time_pipeline_execution(pipeline)
 
 
 if __name__ == "__main__":
