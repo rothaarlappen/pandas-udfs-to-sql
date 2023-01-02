@@ -13,7 +13,7 @@ pipeline_directory = path.join(
     path.dirname(path.dirname(path.abspath(__file__))), "testqueries"
 )
 
-pipelines = ["simple_pipeline.py"]
+pipelines = ["medium_pipeline.py"]
 
 
 def print_and_log(
@@ -53,6 +53,8 @@ def time_pipeline_execution(converted_pipeline: str, repetitions=20):
 
 def main():
     for pipeline in pipelines:
+        with open("benchmark.log", "a") as log:
+            log.write(f"pipeline: {pipeline}\n")
         pipeline = path.join(pipeline_directory, pipeline)
         (setup_file, pipeline_file) = convert.convert_pipeline(pipeline)
 
