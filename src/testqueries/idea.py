@@ -70,3 +70,6 @@ def move_udf_to_database():
 # df_angry_customer = pd.read_sql("SELECT * FROM udfs.orders WHERE onlyOneStar(comment) = 1")
 
 # TODO: look into containerized UDF execution (performance comparison?)
+
+
+# Use Lucas timing tool to explain original runtime (on unconverted pipeline)
