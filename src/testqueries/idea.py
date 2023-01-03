@@ -73,3 +73,5 @@ def move_udf_to_database():
 
 
 # Use Lucas timing tool to explain original runtime (on unconverted pipeline)
+
+# analyze pd.read times more
