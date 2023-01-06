@@ -30,9 +30,9 @@ def converted_file_path(originial_pipeline: str) -> Tuple[str, str]:
     setup_file = "converted_setup_" + path.basename(originial_pipeline)
     pipeline_file = "converted_" + path.basename(originial_pipeline)
     dir = path.dirname(path.abspath(originial_pipeline))
-    file1 = path.join(dir, setup_file)
-    file2 = path.join(dir, pipeline_file)
-    return (file1, file2)
+    setup_file_path = path.join(dir, setup_file)
+    pipeline_file_path = path.join(dir, pipeline_file)
+    return (setup_file_path, pipeline_file_path)
 
 
 class UdfTransformer(NodeTransformer):
@@ -206,7 +206,7 @@ def convert_pipeline(filepath: str, persist_mode: str):
                 if persist_mode == "MATERIALIZED_VIEW":
                     append_ast_to_file(
                         parse(
-                            f"""conn.execute("DROP MATERIALIZED VIEW table_new")\n"""
+                            f"""conn.execute("DROP MATERIALIZED VIEW IF EXISTS table_new")\n"""
                             + f"""conn.execute("CREATE MATERIALIZED VIEW table_new AS SELECT {projection} FROM orders", conn)"""
                         ),
                         pipeline_path,
@@ -222,7 +222,11 @@ def convert_pipeline(filepath: str, persist_mode: str):
         if isinstance(thing, Import) or isinstance(thing, ImportFrom):
             append_ast_to_files(thing, outpaths)
         if isinstance(thing, Expr):
-            if contains_to_sql(thing):
+            if (
+                astunparse.unparse(thing).strip().startswith("sys")
+            ):  # We should probably check if expression needs df...... @Fabian? ^^
+                append_ast_to_files(thing, outpaths)
+            elif contains_to_sql(thing):
                 pass
             else:
                 append_ast_to_file(thing, pipeline_path)
