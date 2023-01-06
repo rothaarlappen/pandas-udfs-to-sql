@@ -34,7 +34,7 @@ def print_and_log(
 
 def time_pipeline_execution(converted_pipeline: str, repetitions=20):
     f = StringIO()
-    for scale_factor in [0.01, 0.1, 1.0]:
+    for scale_factor in [0.01, 0.1, 1.0, 5.0, 10.0]:
         set_key(".env", "pg_scalefactor", str(scale_factor))
         times = []
         for i in range(repetitions):
