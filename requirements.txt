@@ -4,3 +4,4 @@ python-dotenv
 argparse
 astunparse
 pandas
+grizzly-sql
