@@ -6,6 +6,7 @@ from dotenv import set_key
 
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from converter import convert
+from .teardown import teardown
 from contextlib import redirect_stdout
 from io import StringIO
 import subprocess
@@ -19,6 +20,7 @@ PERSIST_MODES = ["MATERIALIZED_VIEW", "NEW_TABLE"]
 
 
 def print_and_log(
+    type: str,
     times: list,
     converted_pipeline: str,
     scale_factor: float,
@@ -30,13 +32,15 @@ def print_and_log(
         f"{path.basename(converted_pipeline)} @ {scale_factor} : {sum(times) / repetitions}"
     )
     print("")
-    log_scalefactor = log.setdefault(scale_factor, {})
+    log_scalefactor = log.setdefault(scale_factor, {}).setdefault(type, {})
     log_scalefactor["times"] = times
     log_scalefactor["avg"] = sum(times) / repetitions
     log_scalefactor["med"] = sorted(times)[repetitions // 2]
 
 
-def time_pipeline_execution(converted_pipeline: str, log: dict, repetitions=20):
+def time_pipeline_execution(
+    type: str, converted_pipeline: str, log: dict, repetitions=20
+):
     f = StringIO()
     for scale_factor in [0.01, 0.1, 1.0, 5.0, 10.0]:
         set_key(".env", "pg_scalefactor", str(scale_factor))
@@ -50,9 +54,10 @@ def time_pipeline_execution(converted_pipeline: str, log: dict, repetitions=20):
                     shell=True,
                 )
                 end = time.time()
+                teardown()
             time_lapsed = end - start
             times.append(time_lapsed)
-        print_and_log(times, converted_pipeline, scale_factor, repetitions, log)
+        print_and_log(type, times, converted_pipeline, scale_factor, repetitions, log)
 
 
 def main():
@@ -70,9 +75,15 @@ def main():
 
             print(setup_file, pipeline_file)
 
-            time_pipeline_execution(setup_file, benchmark_results_pipeline_persist)
-            time_pipeline_execution(pipeline_file, benchmark_results_pipeline_persist)
-            time_pipeline_execution(pipeline, benchmark_results_pipeline_persist)
+            time_pipeline_execution(
+                "setup", setup_file, benchmark_results_pipeline_persist
+            )
+            time_pipeline_execution(
+                "converted", pipeline_file, benchmark_results_pipeline_persist
+            )
+            time_pipeline_execution(
+                "original", pipeline, benchmark_results_pipeline_persist
+            )
     with open("benchmark.log", "a") as log:
         log.write(json.dumps(benchmark_results))
 

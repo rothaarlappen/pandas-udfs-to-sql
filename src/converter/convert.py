@@ -215,7 +215,8 @@ def convert_pipeline(filepath: str, persist_mode: str):
                 elif persist_mode == "NEW_TABLE":
                     append_ast_to_file(
                         parse(
-                            f"""conn.execute("CREATE OR REPLACE TABLE table_new AS SELECT {projection} FROM orders", conn)"""
+                            f"""conn.execute("DROP TABLE IF EXISTS table_new")\n"""
+                            + f"""conn.execute("CREATE TABLE table_new AS SELECT {projection} FROM orders", conn)"""
                         ),
                         pipeline_path,
                     )
