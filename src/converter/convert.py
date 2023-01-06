@@ -207,7 +207,7 @@ def convert_pipeline(filepath: str, persist_mode: str):
                     append_ast_to_file(
                         parse(
                             f"""conn.execute("DROP MATERIALIZED VIEW table_new")\n"""
-                            + f"""conn.execute("CREATE OR REPLACE MATERIALIZED VIEW table_new AS SELECT {projection} FROM orders", conn)"""
+                            + f"""conn.execute("CREATE MATERIALIZED VIEW table_new AS SELECT {projection} FROM orders", conn)"""
                         ),
                         pipeline_path,
                     )
