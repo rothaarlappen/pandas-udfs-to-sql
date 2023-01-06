@@ -6,7 +6,6 @@ from dotenv import set_key
 
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from converter import convert
-from .teardown import teardown
 from contextlib import redirect_stdout
 from io import StringIO
 import subprocess
@@ -45,7 +44,7 @@ def time_pipeline_execution(
     for scale_factor in [0.01, 0.1, 1.0, 5.0, 10.0]:
         set_key(".env", "pg_scalefactor", str(scale_factor))
         times = []
-        for i in range(repetitions):
+        for _ in range(repetitions):
             with redirect_stdout(f):
                 start = time.time()
                 subprocess.run(
@@ -54,7 +53,7 @@ def time_pipeline_execution(
                     shell=True,
                 )
                 end = time.time()
-                teardown()
+                subprocess.run("python3 -m src.evaluation.teardown", shell=True)
             time_lapsed = end - start
             times.append(time_lapsed)
         print_and_log(type, times, converted_pipeline, scale_factor, repetitions, log)
