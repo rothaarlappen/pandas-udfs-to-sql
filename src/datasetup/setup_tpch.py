@@ -15,7 +15,7 @@ from typing import List
 PSQL_PATH = "C:\\Program Files\\PostgreSQL\\13\\bin\\psql.exe"
 DATA_PATH = "C:\\Users\\Paul\\Desktop\\HPI\\BP\\TPC-H_Tools_v3.0.0\\dbgen\\"
 
-DATA_DIRS = {0.01: "10MB", 0.1: "100MB", 1: "1GB", 5 : "5GB", 10:"10GB"}
+DATA_DIRS = {0.01: "10MB", 0.1: "100MB", 1: "1GB", 5: "5GB", 10: "10GB"}
 
 tpch_scalefactors = DATA_DIRS.keys()
 tpch_tables = [

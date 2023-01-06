@@ -3,12 +3,10 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 
 DATABASES = {
-    0: "idp",  # first db....
+    0: "tpch_sf_001",  # first db....
     0.01: "tpch_sf_001",
     0.1: "tpch_sf_01",
     1: "tpch_sf_1",
-    5: "tpch_sf_5",
-    10:"tpch_sf_10"
 }
 
 load_dotenv()

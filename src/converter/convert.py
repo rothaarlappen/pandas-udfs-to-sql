@@ -45,12 +45,13 @@ class UdfTransformer(NodeTransformer):
 # TODO: @Fabian what do you think of such Classes that contain information about parsing and "unparsing" of ast?
 class ApplyOperator:
     def __init__(self, assign: Assign):
-        self.new_column = assign.targets[0].slice.value
+        self.new_column = assign.targets[0].slice.value.value
         self.passed_columns = (
-            assign.value.args[0].body.args[0].slice.value
+            assign.value.args[0].body.args[0].slice.value.value
         )  # currently only one parameter... Should change in the future, lol
         self.invoked_function = assign.value.args[0].body.func.id
         self.dataFrame = assign.targets[0].value.id
+        print(self.passed_columns, self.new_column)
 
     def __str__(self):
         return json.dumps(
