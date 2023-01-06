@@ -132,6 +132,13 @@ def contains_read_sql(assign: Assign) -> bool:
         return False
 
 
+def contains_to_sql(expr: Expr):
+    try:
+        return expr.value.func.attr == "to_sql"
+    except:
+        return False
+
+
 def read_sql_ast(sql: str, apply: List[ApplyOperator]) -> Assign:
     return parse(sql)
 
@@ -159,7 +166,7 @@ def return_used_variables(variables: List[str], ast_node: AST) -> List[str]:
     return hit_variables
 
 
-def convert_pipeline(filepath: str):
+def convert_pipeline(filepath: str, persist_mode: str):
     outpaths = converted_file_path(filepath)
 
     setup_path = outpaths[0]
@@ -197,23 +204,27 @@ def convert_pipeline(filepath: str):
                         if applyOperator.dataFrame == dataframe
                     ]
                 )
-
-                append_ast_to_file(
-                    parse(
-                        f"""{dataframe} = pd.read_sql("SELECT {projection} FROM orders", conn)"""
-                    ),
-                    pipeline_path,
-                )
+                if persist_mode == "MATERIALIZED_VIEW":
+                    append_ast_to_file(
+                        parse(
+                            f"""conn.execute("DROP MATERIALIZED VIEW table_new")\n"""
+                            + f"""conn.execute("CREATE OR REPLACE MATERIALIZED VIEW table_new AS SELECT {projection} FROM orders", conn)"""
+                        ),
+                        pipeline_path,
+                    )
+                elif persist_mode == "NEW_TABLE":
+                    append_ast_to_file(
+                        parse(
+                            f"""conn.execute("CREATE OR REPLACE TABLE table_new AS SELECT {projection} FROM orders", conn)"""
+                        ),
+                        pipeline_path,
+                    )
 
         if isinstance(thing, Import) or isinstance(thing, ImportFrom):
             append_ast_to_files(thing, outpaths)
         if isinstance(thing, Expr):
-            if (
-                astunparse.unparse(thing).strip().startswith("sys")
-            ):  # We should probably check if expression needs df...... @Fabian? ^^
-                append_ast_to_files(
-                    thing, outpaths
-                )  # sys.path.append(path.dirname(path.dirname( path.abspath(__file__))))
+            if contains_to_sql(thing):
+                pass
             else:
                 append_ast_to_file(thing, pipeline_path)
 
@@ -245,6 +256,12 @@ if __name__ == "__main__":
     parser.add_argument(
         "filepath", type=str, help="path to file that is to be converted"
     )
+    parser.add_argument(
+        "persist_mode",
+        type=str,
+        help="Store results as 'MATERIALIZED_VIEW' or 'NEW_TABLE'",
+        default="MATERIALIZED_VIEW",
+    )
+
     args = parser.parse_args()
-    file = args.filepath
-    convert_pipeline(file)
+    convert_pipeline(args.filepath, args.persist_mode)
