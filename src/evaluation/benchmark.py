@@ -38,7 +38,7 @@ def print_and_log(
 
 
 def time_pipeline_execution(
-    type: str, converted_pipeline: str, log: dict, repetitions=20
+    type: str, converted_pipeline: str, log: dict, repetitions=5
 ):
     f = StringIO()
     for scale_factor in [0.01, 0.1, 1.0, 5.0, 10.0]:
