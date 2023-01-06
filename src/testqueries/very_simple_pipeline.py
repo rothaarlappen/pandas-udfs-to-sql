@@ -17,4 +17,4 @@ df = pd.read_sql("SELECT * FROM orders", conn)
 
 df["comment_length"] = df.apply(lambda row: comment_len(row["o_comment"]), axis=1)
 
-df.to_sql("orders_new", conn)
+df.to_sql("table_new", conn)

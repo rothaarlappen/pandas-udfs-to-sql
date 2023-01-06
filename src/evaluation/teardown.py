@@ -5,7 +5,7 @@ conn = create_connection()
 
 def teardown():
     try:
-        conn.execute("DROP TABLE IF EXISTS orders_new")
+        conn.execute("DROP TABLE IF EXISTS table_new")
     except:
         pass
     try:

@@ -29,4 +29,4 @@ df["order_priority_numeric"] = df.apply(
     lambda row: order_priority_numeric(row["o_orderpriority"]), axis=1
 )
 
-df.to_sql("orders_new", conn)
+df.to_sql("table_new", conn)

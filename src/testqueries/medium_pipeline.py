@@ -68,4 +68,4 @@ df["order_priority_numeric_2"] = df.apply(
 )
 df["comment_length_3"] = df.apply(lambda row: comment_len_3(row["o_comment"]), axis=1)
 
-df.to_sql("orders_new", conn)
+df.to_sql("table_new", conn)
