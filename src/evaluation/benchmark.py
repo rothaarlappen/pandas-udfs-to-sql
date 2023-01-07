@@ -74,9 +74,7 @@ def main():
     for type in TYPES:
         benchmark_results_type = benchmark_results.setdefault(type, {})
         for pipeline in PIPELINES[type]:
-            benchmark_results_pipeline = benchmark_results.setdefault(
-                benchmark_results_type, {}
-            )
+            benchmark_results_pipeline = benchmark_results_type.setdefault(pipeline, {})
             for persist_mode in PERSIST_MODES[type]:
                 benchmark_results_pipeline_persist = (
                     benchmark_results_pipeline.setdefault(persist_mode, {})
