@@ -17,7 +17,11 @@ pipeline_directory = path.join(
 TYPES = ["head", "to_sql"]
 PIPELINES = {
     "to_sql": ["very_simple_pipeline.py", "simple_pipeline.py", "medium_pipeline.py"],
-    "head": ["head_very_simple_pipeline.py"],
+    "head": [
+        "head_very_simple_pipeline.py",
+        "head_simple_pipeline.py",
+        "head_medium_pipeline.py",
+    ],
 }
 PERSIST_MODES = {"to_sql": ["MATERIALIZED_VIEW", "NEW_TABLE"], "head": ["NONE"]}
 SCALE_FACTORS = [0.01, 0.1, 1.0, 5.0, 10.0]
