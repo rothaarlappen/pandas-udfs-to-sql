@@ -139,6 +139,13 @@ def contains_to_sql(expr: Expr):
         return False
 
 
+def contains_head(expr: Expr):
+    try:
+        return expr.value.func.attr == "head"
+    except:
+        return False
+
+
 def read_sql_ast(sql: str, apply: List[ApplyOperator]) -> Assign:
     return parse(sql)
 
@@ -204,23 +211,30 @@ def convert_pipeline(filepath: str, persist_mode: str):
                         if applyOperator.dataFrame == dataframe
                     ]
                 )
-                if persist_mode == "MATERIALIZED_VIEW":
+                if contains_to_sql(thing):
+                    if persist_mode == "MATERIALIZED_VIEW":
+                        append_ast_to_file(
+                            parse(
+                                f"""conn.execute("DROP MATERIALIZED VIEW IF EXISTS table_new")\n"""
+                                + f"""conn.execute("CREATE MATERIALIZED VIEW table_new AS SELECT {projection} FROM orders", conn)"""
+                            ),
+                            pipeline_path,
+                        )
+                    elif persist_mode == "NEW_TABLE":
+                        append_ast_to_file(
+                            parse(
+                                f"""conn.execute("DROP TABLE IF EXISTS table_new")\n"""
+                                + f"""conn.execute("CREATE TABLE table_new AS SELECT {projection} FROM orders", conn)"""
+                            ),
+                            pipeline_path,
+                        )
+                elif contains_head(thing):
                     append_ast_to_file(
                         parse(
-                            f"""conn.execute("DROP MATERIALIZED VIEW IF EXISTS table_new")\n"""
-                            + f"""conn.execute("CREATE MATERIALIZED VIEW table_new AS SELECT {projection} FROM orders", conn)"""
+                            f"df = pd.read_sql('SELECT {projection} FROM orders', conn)"
                         ),
                         pipeline_path,
                     )
-                elif persist_mode == "NEW_TABLE":
-                    append_ast_to_file(
-                        parse(
-                            f"""conn.execute("DROP TABLE IF EXISTS table_new")\n"""
-                            + f"""conn.execute("CREATE TABLE table_new AS SELECT {projection} FROM orders", conn)"""
-                        ),
-                        pipeline_path,
-                    )
-
         if isinstance(thing, Import) or isinstance(thing, ImportFrom):
             append_ast_to_files(thing, outpaths)
         if isinstance(thing, Expr):
@@ -228,7 +242,7 @@ def convert_pipeline(filepath: str, persist_mode: str):
                 astunparse.unparse(thing).strip().startswith("sys")
             ):  # We should probably check if expression needs df...... @Fabian? ^^
                 append_ast_to_files(thing, outpaths)
-            elif contains_to_sql(thing):
+            elif contains_to_sql(thing) or contains_head(thing):
                 pass
             else:
                 append_ast_to_file(thing, pipeline_path)

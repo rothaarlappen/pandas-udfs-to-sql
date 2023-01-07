@@ -14,8 +14,12 @@ pipeline_directory = path.join(
     path.dirname(path.dirname(path.abspath(__file__))), "testqueries"
 )
 
-PIPELINES = ["very_simple_pipeline.py", "simple_pipeline.py", "medium_pipeline.py"]
-PERSIST_MODES = ["MATERIALIZED_VIEW", "NEW_TABLE"]
+TYPES = ["head", "to_sql"]
+PIPELINES = {
+    "to_sql": ["very_simple_pipeline.py", "simple_pipeline.py", "medium_pipeline.py"],
+    "head": ["head_very_simple_pipeline.py"],
+}
+PERSIST_MODES = {"to_sql": ["MATERIALIZED_VIEW", "NEW_TABLE"], "head": ["NONE"]}
 
 
 def print_and_log(
@@ -61,28 +65,32 @@ def time_pipeline_execution(
 
 def main():
     benchmark_results = {}
-    for pipeline in PIPELINES:
-        benchmark_results_pipeline = benchmark_results.setdefault(pipeline, {})
-        for persist_mode in PERSIST_MODES:
-            benchmark_results_pipeline_persist = benchmark_results_pipeline.setdefault(
-                persist_mode, {}
+    for type in TYPES:
+        benchmark_results_type = benchmark_results.setdefault(type, {})
+        for pipeline in PIPELINES:
+            benchmark_results_pipeline = benchmark_results.setdefault(
+                benchmark_results_type, {}
             )
-            pipeline = path.join(pipeline_directory, pipeline)
-            (setup_file, pipeline_file) = convert.convert_pipeline(
-                pipeline, persist_mode
-            )
+            for persist_mode in PERSIST_MODES:
+                benchmark_results_pipeline_persist = (
+                    benchmark_results_pipeline.setdefault(persist_mode, {})
+                )
+                pipeline = path.join(pipeline_directory, pipeline)
+                (setup_file, pipeline_file) = convert.convert_pipeline(
+                    pipeline, persist_mode
+                )
 
-            print(setup_file, pipeline_file)
+                print(setup_file, pipeline_file)
 
-            time_pipeline_execution(
-                "setup", setup_file, benchmark_results_pipeline_persist
-            )
-            time_pipeline_execution(
-                "converted", pipeline_file, benchmark_results_pipeline_persist
-            )
-            time_pipeline_execution(
-                "original", pipeline, benchmark_results_pipeline_persist
-            )
+                time_pipeline_execution(
+                    "setup", setup_file, benchmark_results_pipeline_persist
+                )
+                time_pipeline_execution(
+                    "converted", pipeline_file, benchmark_results_pipeline_persist
+                )
+                time_pipeline_execution(
+                    "original", pipeline, benchmark_results_pipeline_persist
+                )
     with open("benchmark.log", "a") as log:
         log.write(json.dumps(benchmark_results))
 
