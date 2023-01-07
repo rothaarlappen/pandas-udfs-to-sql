@@ -5,3 +5,4 @@ argparse
 astunparse
 pandas
 grizzly-sql
+matplotlib

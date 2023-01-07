@@ -20,6 +20,8 @@ PIPELINES = {
     "head": ["head_very_simple_pipeline.py"],
 }
 PERSIST_MODES = {"to_sql": ["MATERIALIZED_VIEW", "NEW_TABLE"], "head": ["NONE"]}
+SCALE_FACTORS = [0.01, 0.1, 1.0, 5.0, 10.0]
+REPETITIONS = 5
 
 
 def print_and_log(
@@ -42,10 +44,10 @@ def print_and_log(
 
 
 def time_pipeline_execution(
-    type: str, converted_pipeline: str, log: dict, repetitions=5
+    type: str, converted_pipeline: str, log: dict, repetitions=REPETITIONS
 ):
     f = StringIO()
-    for scale_factor in [0.01, 0.1, 1.0, 5.0, 10.0]:
+    for scale_factor in SCALE_FACTORS:
         set_key(".env", "pg_scalefactor", str(scale_factor))
         times = []
         for _ in range(repetitions):
@@ -67,11 +69,11 @@ def main():
     benchmark_results = {}
     for type in TYPES:
         benchmark_results_type = benchmark_results.setdefault(type, {})
-        for pipeline in PIPELINES:
+        for pipeline in PIPELINES[type]:
             benchmark_results_pipeline = benchmark_results.setdefault(
                 benchmark_results_type, {}
             )
-            for persist_mode in PERSIST_MODES:
+            for persist_mode in PERSIST_MODES[type]:
                 benchmark_results_pipeline_persist = (
                     benchmark_results_pipeline.setdefault(persist_mode, {})
                 )
