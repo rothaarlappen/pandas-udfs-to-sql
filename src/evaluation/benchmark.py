@@ -90,35 +90,35 @@ def main():
         benchmark_results_type = benchmark_results.setdefault(df_command, {})
         for pipeline in PIPELINES[df_command]:
             benchmark_results_pipeline = benchmark_results_type.setdefault(pipeline, {})
-            for persist_mode in PERSIST_MODES[df_command]:
-                benchmark_results_pipeline_persist = (
-                    benchmark_results_pipeline.setdefault(persist_mode, {})
-                )
-                pipeline_file = path.join(pipeline_directory, pipeline)
-                (setup_file, converted_pipeline_file) = convert.convert_pipeline(
-                    pipeline_file, persist_mode
-                )
+            # for persist_mode in PERSIST_MODES[df_command]:
+            #     benchmark_results_pipeline_persist = (
+            #         benchmark_results_pipeline.setdefault(persist_mode, {})
+            #     )
+            #     pipeline_file = path.join(pipeline_directory, pipeline)
+            #     (setup_file, converted_pipeline_file) = convert.convert_pipeline(
+            #         pipeline_file, persist_mode
+            #     )
 
-                print(setup_file, converted_pipeline_file)
+            #     print(setup_file, converted_pipeline_file)
 
-                time_pipeline_execution(
-                    "setup", setup_file, benchmark_results_pipeline_persist
-                )
-                time_pipeline_execution(
-                    "converted", converted_pipeline_file, benchmark_results_pipeline_persist
-                )
-                time_pipeline_execution(
-                    "original", pipeline_file, benchmark_results_pipeline_persist
-                )
+            #     time_pipeline_execution(
+            #         "setup", setup_file, benchmark_results_pipeline_persist
+            #     )
+            #     time_pipeline_execution(
+            #         "converted", converted_pipeline_file, benchmark_results_pipeline_persist
+            #     )
+            #     time_pipeline_execution(
+            #         "original", pipeline_file, benchmark_results_pipeline_persist
+            #     )
                 
-                for system in RELATED_WORK_PIPELINES.keys():
-                    third_party_pipeline = RELATED_WORK_PIPELINES[system].get(pipeline, None)
-                    if third_party_pipeline is None:
-                        break
-                    pipeline_file = path.join(pipeline_directory, third_party_pipeline)
-                    time_pipeline_execution(
-                        system, pipeline_file, benchmark_results_pipeline_persist
-                    )
+            for system in RELATED_WORK_PIPELINES.keys():
+                third_party_pipeline = RELATED_WORK_PIPELINES[system].get(pipeline, None)
+                if third_party_pipeline is None:
+                    break
+                pipeline_file = path.join(pipeline_directory, third_party_pipeline)
+                time_pipeline_execution(
+                    system, pipeline_file, {}
+                )
 
     with open("benchmark_log.json", "a") as log:
         log.write(json.dumps(benchmark_results))
