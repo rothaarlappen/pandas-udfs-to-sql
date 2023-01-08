@@ -18,4 +18,4 @@ df = grizzly.read_table("orders")
 
 df["comment_length"] = df["o_comment"].map(comment_len) # apply myfunc
 
-print(df.head())
+print(df.collect()[:5])

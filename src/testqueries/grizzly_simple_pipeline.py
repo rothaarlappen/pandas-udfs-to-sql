@@ -28,4 +28,4 @@ df["comment_length"] = df["o_comment"].map(comment_len)
 df["order_year"] = df["o_orderdate"].map(order_year)
 df["order_priority_numeric"] = df["o_orderpriority"].map(order_priority_numeric)
 
-print(df.head())
+print(df.collect()[:5])

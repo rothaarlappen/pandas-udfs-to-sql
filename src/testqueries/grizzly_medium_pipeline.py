@@ -58,4 +58,4 @@ df["order_priority_numeric_2"] = df["o_orderpriority"].map(order_priority_numeri
 
 df["comment_length_3"] = df["o_comment"].map(comment_len_3)
 
-print(df.head())
+print(df.collect()[:5])
