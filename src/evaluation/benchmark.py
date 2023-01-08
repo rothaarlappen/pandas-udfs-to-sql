@@ -14,6 +14,11 @@ pipeline_directory = path.join(
     path.dirname(path.dirname(path.abspath(__file__))), "testqueries"
 )
 
+# C:\Python310\python.exe       -> python 
+# /root/anaconda3/bin/python3   -> python3 
+# /root/anaconda3/bin/python    -> python
+PYTHON = path.basename(sys.executable).split(".")[0]
+
 DATAFRAME_COMMAND = ["to_sql", "head"]
 PIPELINES = {
     "to_sql": ["very_simple_pipeline.py", "simple_pipeline.py", "medium_pipeline.py"],
@@ -68,12 +73,12 @@ def time_pipeline_execution(
             with redirect_stdout(f):
                 start = time.time()
                 subprocess.run(
-                    "python3 " + converted_pipeline,
+                    f"{PYTHON} {converted_pipeline}",
                     stdout=subprocess.DEVNULL,
                     shell=True,
                 )
                 end = time.time()
-                subprocess.run("python3 -m src.evaluation.teardown", shell=True)
+                subprocess.run(f"{PYTHON} -m src.evaluation.teardown", shell=True)
             time_lapsed = end - start
             times.append(time_lapsed)
         print_and_log(type, times, converted_pipeline, scale_factor, repetitions, log)
