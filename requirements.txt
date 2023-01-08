@@ -5,5 +5,6 @@ argparse
 astunparse
 pandas
 grizzly-sql
+pyyaml
 matplotlib
 np
