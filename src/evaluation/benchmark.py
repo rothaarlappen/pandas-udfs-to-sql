@@ -115,7 +115,7 @@ def main():
                         system, pipeline_file, benchmark_results_pipeline_persist
                     )
 
-    with open("benchmark.log", "a") as log:
+    with open("benchmark_log.json", "a") as log:
         log.write(json.dumps(benchmark_results))
 
 
