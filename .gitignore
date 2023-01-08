@@ -1,3 +1,5 @@
+/src/plots
+/src/benchmark.json
 .env
 /.vscode
 # Byte-compiled / optimized / DLL files

@@ -6,3 +6,4 @@ astunparse
 pandas
 grizzly-sql
 matplotlib
+np

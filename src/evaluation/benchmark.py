@@ -14,7 +14,7 @@ pipeline_directory = path.join(
     path.dirname(path.dirname(path.abspath(__file__))), "testqueries"
 )
 
-TYPES = ["head", "to_sql"]
+DATAFRAME_COMMAND = ["head", "to_sql"]
 PIPELINES = {
     "to_sql": ["very_simple_pipeline.py", "simple_pipeline.py", "medium_pipeline.py"],
     "head": [
@@ -71,11 +71,11 @@ def time_pipeline_execution(
 
 def main():
     benchmark_results = {}
-    for type in TYPES:
-        benchmark_results_type = benchmark_results.setdefault(type, {})
-        for pipeline in PIPELINES[type]:
+    for df_command in DATAFRAME_COMMAND:
+        benchmark_results_type = benchmark_results.setdefault(df_command, {})
+        for pipeline in PIPELINES[df_command]:
             benchmark_results_pipeline = benchmark_results_type.setdefault(pipeline, {})
-            for persist_mode in PERSIST_MODES[type]:
+            for persist_mode in PERSIST_MODES[df_command]:
                 benchmark_results_pipeline_persist = (
                     benchmark_results_pipeline.setdefault(persist_mode, {})
                 )
