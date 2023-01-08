@@ -14,7 +14,7 @@ pipeline_directory = path.join(
     path.dirname(path.dirname(path.abspath(__file__))), "testqueries"
 )
 
-DATAFRAME_COMMAND = ["head", "to_sql"]
+DATAFRAME_COMMAND = ["to_sql", "head"]
 PIPELINES = {
     "to_sql": ["very_simple_pipeline.py", "simple_pipeline.py", "medium_pipeline.py"],
     "head": [
@@ -23,6 +23,16 @@ PIPELINES = {
         "head_medium_pipeline.py",
     ],
 }
+
+RELATED_WORK_PIPELINES = {
+    "grizzly": 
+    {   "very_simple_pipeline.py" : "grizzly_very_simple_pipeline.py",
+        "simple_pipeline.py" : "grizzly_simple_pipeline.py",
+        "medium_pipeline.py" : "grizzly_medium_pipeline.py"
+    }
+    # Microsoft etc. tbd.
+}
+
 PERSIST_MODES = {"to_sql": ["MATERIALIZED_VIEW", "NEW_TABLE"], "head": ["NONE"]}
 SCALE_FACTORS = [0.01, 0.1, 1.0, 5.0, 10.0]
 REPETITIONS = 5
@@ -79,22 +89,32 @@ def main():
                 benchmark_results_pipeline_persist = (
                     benchmark_results_pipeline.setdefault(persist_mode, {})
                 )
-                pipeline = path.join(pipeline_directory, pipeline)
-                (setup_file, pipeline_file) = convert.convert_pipeline(
-                    pipeline, persist_mode
+                pipeline_file = path.join(pipeline_directory, pipeline)
+                (setup_file, converted_pipeline_file) = convert.convert_pipeline(
+                    pipeline_file, persist_mode
                 )
 
-                print(setup_file, pipeline_file)
+                print(setup_file, converted_pipeline_file)
 
                 time_pipeline_execution(
                     "setup", setup_file, benchmark_results_pipeline_persist
                 )
                 time_pipeline_execution(
-                    "converted", pipeline_file, benchmark_results_pipeline_persist
+                    "converted", converted_pipeline_file, benchmark_results_pipeline_persist
                 )
                 time_pipeline_execution(
-                    "original", pipeline, benchmark_results_pipeline_persist
+                    "original", pipeline_file, benchmark_results_pipeline_persist
                 )
+                
+                for system in RELATED_WORK_PIPELINES.keys():
+                    third_party_pipeline = RELATED_WORK_PIPELINES[system].get(pipeline, None)
+                    if third_party_pipeline is None:
+                        break
+                    pipeline_file = path.join(pipeline_directory, third_party_pipeline)
+                    time_pipeline_execution(
+                        system, pipeline_file, benchmark_results_pipeline_persist
+                    )
+
     with open("benchmark.log", "a") as log:
         log.write(json.dumps(benchmark_results))
 
