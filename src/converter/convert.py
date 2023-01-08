@@ -51,8 +51,7 @@ class ApplyOperator:
         )  # currently only one parameter... Should change in the future, lol
         self.invoked_function = assign.value.args[0].body.func.id
         self.dataFrame = assign.targets[0].value.id
-        print(self.passed_columns, self.new_column)
-
+        
     def __str__(self):
         return json.dumps(
             {
