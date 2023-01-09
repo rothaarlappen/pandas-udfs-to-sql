@@ -39,7 +39,7 @@ RELATED_WORK_PIPELINES = {
 }
 
 PERSIST_MODES = {"to_sql": ["MATERIALIZED_VIEW", "NEW_TABLE"], "head": ["NONE"]}
-SCALE_FACTORS = [0.01, 0.1, 1.0, 5.0, 10.0]
+SCALE_FACTORS = [0.01] #, #0.1, 1.0, 5.0, 10.0]
 REPETITIONS = 5
 
 
@@ -117,7 +117,7 @@ def main():
                     break
                 pipeline_file = path.join(pipeline_directory, third_party_pipeline)
                 time_pipeline_execution(
-                    system, pipeline_file, {}
+                    system, pipeline_file, benchmark_results_pipeline
                 )
 
     with open("benchmark_log.json", "a") as log:
