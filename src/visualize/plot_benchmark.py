@@ -49,6 +49,20 @@ def get_all_combinations(log):
                         }
 
 
+def get_all_grizzly_combinations(log):
+    command_log = log["head"]
+    for pipeline in PIPELINES["head"]:
+        for sf in SCALE_FACTORS:
+            benchmark = command_log[pipeline][str(sf)]["grizzly"]
+            yield {
+                "pipeline": pipeline,
+                "sf": sf,
+                "count": PIPELINE_TO_COUNT[pipeline],
+                "runtimes": benchmark["times"],
+                "med": benchmark["med"],
+            }
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="Visualize")
     parser.add_argument("log", type=str, help="path to log that is to be visualized")
@@ -56,11 +70,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     log = load_log(args.log)
-
-    for benchmark in get_all_combinations(log):
-        print(
-            f"{benchmark['df_command']} - {benchmark['pipeline']} - {benchmark['sf']} - {benchmark['count']} - {benchmark['runtimes']}"
-        )
+    grizzly_log = load_log("grizzly_benchmark.json")
 
     runtimes_on_scalefactor_by_udf = {}
     for benchmark in get_all_combinations(log):
@@ -73,24 +83,52 @@ if __name__ == "__main__":
         ).setdefault(
             benchmark["type"], {}
         ).setdefault(
-            benchmark["sf"], []
-        ).append(
-            benchmark["med"]
+            benchmark["sf"], benchmark["med"]
         )
+
+    grizzly_runtimes_on_scalefactor_by_udf = {}
+    for benchmark in get_all_grizzly_combinations(grizzly_log):
+        grizzly_runtimes_on_scalefactor_by_udf.setdefault(
+            benchmark["count"], {}
+        ).setdefault(benchmark["pipeline"], {}).setdefault(
+            benchmark["sf"], benchmark["med"]
+        )
+
     print(runtimes_on_scalefactor_by_udf)
+    print(grizzly_runtimes_on_scalefactor_by_udf)
+
     r = np.arange(len(SCALE_FACTORS))
-    width = 0.25
-    offset = (len(TYPES) - 1) * width / 2
+    width = 0.6
     for df_command in DATAFRAME_COMMAND:
-        for persist_mode in PERSIST_MODES[df_command]:
-            for pipeline in PIPELINES[df_command]:
-                bars = []
-                labels = []
-                for (i, type) in enumerate(TYPES):
+        for pipeline in PIPELINES[df_command]:
+            original_plotted = False
+            bars_per_point = 0
+            bars = []
+            labels = []
+            if df_command == "head":
+                bars.append(
+                    {
+                        "data": np.asarray(
+                            list(
+                                grizzly_runtimes_on_scalefactor_by_udf[
+                                    PIPELINE_TO_COUNT[pipeline]
+                                ][pipeline].values()
+                            )
+                        ),
+                        "name": "grizzly",
+                    }
+                )
+                labels.append("grizzly")
+                bars_per_point += 1
+            for persist_mode in PERSIST_MODES[df_command]:
+                for type in TYPES:
+                    if type == "original":
+                        if original_plotted:
+                            continue
+                        original_plotted = True
                     bars.append(
-                        plt.bar(
-                            r + width * i - offset,
-                            np.asarray(
+                        {
+                            "data": np.asarray(
                                 list(
                                     runtimes_on_scalefactor_by_udf[df_command][
                                         persist_mode
@@ -98,18 +136,34 @@ if __name__ == "__main__":
                                         type
                                     ].values()
                                 )
-                            ).flatten(),
-                            width,
-                        )
+                            ),
+                            "name": type,
+                        }
                     )
-                    labels.append(f"{type}")
-                plt.xticks(r, SCALE_FACTORS)
-                plt.xlabel("Scalefactor")
-                plt.legend(bars, labels)
-                plt.title(
-                    f"{df_command} Runtimes @ {PIPELINE_TO_COUNT[pipeline]} UDF {persist_mode  if (persist_mode != 'NONE') else ''}"
+                    labels.append(
+                        f"{type}{f' - {persist_mode}'  if (persist_mode != 'NONE') else ''}"
+                    )
+                    bars_per_point += 1
+            if df_command == "to_sql":
+                bars, labels = zip(
+                    *sorted(zip(bars, labels), key=lambda x: x[0]["name"])
                 )
-                plt.savefig(
-                    f"plots/{df_command}_runtimes_{PIPELINE_TO_COUNT[pipeline]}_UDF_{persist_mode}.pdf"
+
+            bar_references = []
+            bar_width = width / bars_per_point
+            offset = (bars_per_point - 1) * bar_width / 2
+
+            for i, bar in enumerate(bars):
+                bar_references.append(
+                    plt.bar(r + bar_width * i - offset, bar["data"], bar_width)
                 )
-                plt.show()
+            plt.xticks(r, SCALE_FACTORS)
+            plt.xlabel("Scalefactor")
+            if df_command == "to_sql":
+                plt.yscale("log")
+            plt.legend(bar_references, labels)
+            plt.title(f"{df_command} Runtimes @ {PIPELINE_TO_COUNT[pipeline]} UDF")
+            plt.savefig(
+                f"plots/{df_command}_runtimes_{PIPELINE_TO_COUNT[pipeline]}_UDF.pdf"
+            )
+            plt.show()
