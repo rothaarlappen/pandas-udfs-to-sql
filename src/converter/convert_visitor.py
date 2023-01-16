@@ -221,23 +221,41 @@ class SetupGenerator:
     def __init__(self, udf_visitor: UDFVisitor) -> None:
         self.udf_visitor = udf_visitor
 
-    def infer_data_types(self, function_name : str):
+    def create_udf_with_inferred_types(self, function_name : str):
+        # TODO: get correct connection variable out of list
         applies = [apply for apply in self.udf_visitor.apply_operators if apply.invoked_function == function_name]
         assert(len(applies) > 0)
         apply : ApplyOperator = applies[0]
-        # TODO: get correct connection variable out of list
+
+        function_info = self.udf_visitor.functions[function_name]
         return parse(
             f"""{function_name}_example_input = {list(self.udf_visitor.connection_variables)[0]}.execute("SELECT {apply.passed_columns} FROM orders LIMIT 1").fetchall()[0][0]
 {function_name}_input_type = type({function_name}_example_input)
-{function_name}_output_type = type({function_name}({function_name}_example_input))"""
-        )
+{function_name}_output_type = type({function_name}({function_name}_example_input))
+{list(self.udf_visitor.connection_variables)[0]}.execute(f\"\"\"
+    CREATE OR REPLACE FUNCTION {function_name} ({apply.passed_columns} {{DATATYPE_MAPPING[{function_name}_input_type]}})
+    RETURNS {{DATATYPE_MAPPING[{function_name}_output_type]}}
+    AS $$
+        {astunparse.unparse(function_info["body"])}
+    $$ LANGUAGE plpython3u
+    PARALLEL SAFE;
+    \"\"\")
+    """)
 
+    def get_datatype_mapping(self):
+        return parse("""DATATYPE_MAPPING = {
+    str: "text",
+    int: "integer",
+    bool: "bool",
+    Timestamp: "date",
+}""")
     def generate_setup(self):
         setup = []
+        setup.append(self.get_datatype_mapping())
         setup += self.udf_visitor.imports
         setup += [function["node"] for function in self.udf_visitor.functions.values()]
         setup += [self.udf_visitor.last_assigns[connection] for connection in self.udf_visitor.connection_variables]
-        setup += [self.infer_data_types(function) for function in self.udf_visitor.functions.keys()]
+        setup += [self.create_udf_with_inferred_types(function) for function in self.udf_visitor.functions.keys()]
         return setup
 
 
