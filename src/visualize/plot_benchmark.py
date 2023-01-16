@@ -159,11 +159,12 @@ if __name__ == "__main__":
                 )
             plt.xticks(r, SCALE_FACTORS)
             plt.xlabel("Scalefactor")
+            plt.ylabel("Seconds")
             if df_command == "to_sql":
                 plt.yscale("log")
             plt.legend(bar_references, labels)
             plt.title(f"{df_command} Runtimes @ {PIPELINE_TO_COUNT[pipeline]} UDF")
             plt.savefig(
-                f"plots/{df_command}_runtimes_{PIPELINE_TO_COUNT[pipeline]}_UDF.pdf"
+                f"plots/{df_command}_runtimes_{PIPELINE_TO_COUNT[pipeline]}_UDF.png"
             )
             plt.show()
