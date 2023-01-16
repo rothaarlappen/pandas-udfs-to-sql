@@ -251,8 +251,8 @@ class SetupGenerator:
 }""")
     def generate_setup(self):
         setup = []
-        setup.append(self.get_datatype_mapping())
         setup += self.udf_visitor.imports
+        setup.append(self.get_datatype_mapping())
         setup += [function["node"] for function in self.udf_visitor.functions.values()]
         setup += [self.udf_visitor.last_assigns[connection] for connection in self.udf_visitor.connection_variables]
         setup += [self.create_udf_with_inferred_types(function) for function in self.udf_visitor.functions.keys()]
