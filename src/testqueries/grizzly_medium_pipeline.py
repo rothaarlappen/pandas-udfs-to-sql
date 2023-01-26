@@ -4,41 +4,53 @@ from pandas import Timestamp
 
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from database import create_connection
+
 connection = create_connection().raw_connection()
 
 import grizzly
 from grizzly.relationaldbexecutor import RelationalExecutor
 from grizzly.sqlgenerator import SQLGenerator
 
+
 def comment_len(comment: str) -> int:
-    return str(len(comment))
+    return len(comment)
+
 
 def order_year(orderdate: Timestamp) -> int:
-    return str(orderdate)[:4]
+    return int(str(orderdate)[:4])
+
 
 def order_priority_numeric(orderpriority: str) -> int:
     return int(orderpriority[0])
 
+
 def comment_len_1(comment: str) -> int:
-    return str(len(comment))
+    return len(comment)
+
 
 def order_year_1(orderdate: Timestamp) -> int:
-    return str(orderdate)[:4]
+    return int(str(orderdate)[:4])
+
 
 def order_priority_numeric_1(orderpriority: str) -> int:
     return int(orderpriority[0])
 
+
 def comment_len_2(comment: str) -> int:
-    return str(len(comment))
+    return len(comment)
+
 
 def order_year_2(orderdate: Timestamp) -> int:
-    return str(orderdate)[:4]
+    return int(str(orderdate)[:4])
+
 
 def order_priority_numeric_2(orderpriority: str) -> int:
     return int(orderpriority[0])
 
+
 def comment_len_3(comment: str) -> int:
-    return str(len(comment))
+    return len(comment)
+
 
 grizzly.use(RelationalExecutor(connection, SQLGenerator("postgresql")))
 

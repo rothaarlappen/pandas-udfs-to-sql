@@ -10,7 +10,7 @@ conn = create_connection()
 
 
 def comment_len(comment: str) -> int:
-    return str(len(comment))
+    return len(comment)
 
 
 df = pd.read_sql("SELECT * FROM orders", conn)

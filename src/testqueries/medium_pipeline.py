@@ -10,11 +10,11 @@ conn = create_connection()
 
 
 def comment_len(comment: str) -> int:
-    return str(len(comment))
+    return len(comment)
 
 
 def order_year(orderdate: Timestamp) -> int:
-    return str(orderdate)[:4]
+    return int(str(orderdate)[:4])
 
 
 def order_priority_numeric(orderpriority: str) -> int:
@@ -22,11 +22,11 @@ def order_priority_numeric(orderpriority: str) -> int:
 
 
 def comment_len_1(comment: str) -> int:
-    return str(len(comment))
+    return len(comment)
 
 
 def order_year_1(orderdate: Timestamp) -> int:
-    return str(orderdate)[:4]
+    return int(str(orderdate)[:4])
 
 
 def order_priority_numeric_1(orderpriority: str) -> int:
@@ -34,11 +34,11 @@ def order_priority_numeric_1(orderpriority: str) -> int:
 
 
 def comment_len_2(comment: str) -> int:
-    return str(len(comment))
+    return len(comment)
 
 
 def order_year_2(orderdate: Timestamp) -> int:
-    return str(orderdate)[:4]
+    return int(str(orderdate)[:4])
 
 
 def order_priority_numeric_2(orderpriority: str) -> int:
@@ -46,7 +46,7 @@ def order_priority_numeric_2(orderpriority: str) -> int:
 
 
 def comment_len_3(comment: str) -> int:
-    return str(len(comment))
+    return len(comment)
 
 
 df = pd.read_sql("SELECT * FROM orders", conn)

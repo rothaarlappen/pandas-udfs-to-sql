@@ -10,11 +10,11 @@ conn = create_connection()
 
 
 def comment_len(comment: str) -> int:
-    return str(len(comment))
+    return len(comment)
 
 
 def order_year(orderdate: Timestamp) -> int:
-    return str(orderdate)[:4]
+    return int(str(orderdate)[:4])
 
 
 def order_priority_numeric(orderpriority: str) -> int:
