@@ -153,11 +153,13 @@ class SetupGenerator:
 
     def get_datatype_mapping(self):
         return parse(
-            """DATATYPE_MAPPING = {
+            """import datetime
+DATATYPE_MAPPING = {
     str: "text",
     int: "integer",
     bool: "bool",
     Timestamp: "date",
+    datetime.date: "date",
 }"""
         )
 
