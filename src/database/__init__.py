@@ -3,7 +3,6 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 
 DATABASES = {
-    0: "master",  # first db....
     0.01: "tpch_sf_001",
     0.1: "tpch_sf_01",
     1: "tpch_sf_1",
@@ -11,44 +10,34 @@ DATABASES = {
     10: "tpch_sf_10",
 }
 
+MASTER_DATABASES = {
+    "postgresql" : "idp",
+    "sqlserver" : "master"
+}
+
 load_dotenv()
 PG_PW = os.getenv("pg_pw")
 PG_HOST = os.getenv("pg_host")
 PG_USER = os.getenv("pg_user")
-PG_SCALEFACTOR = float(os.getenv("pg_scalefactor") or 0)
 
 SQLSERVER_PW = os.getenv("sqlserver_pw")
 SQLSERVER_HOST = os.getenv("sqlserver_host")
 SQLSERVER_USER = os.getenv("sqlserver_user")
-SQLSERVER_SCALEFACTOR = float(os.getenv("sqlserver_scalefactor") or 0)
-SQLSERVER_SERVER = os.getenv("sqlserver_server")
 
+# TODO: change to db_scalefactor
+DB_SCALEFACTOR = float(os.getenv("pg_scalefactor") or 0)
 SQL_FLAVOR = os.getenv("flavor")
 
-def psycopg2_connection_string(scalefactor: int = 0):
-    if scalefactor not in DATABASES.keys():
-        raise ValueError("This TPC-H scalefactor is not supported")
-    pg_db = DATABASES[PG_SCALEFACTOR]
-    return f"postgresql+psycopg2://{PG_USER}:{PG_PW}@{PG_HOST}/{pg_db}"
-
-
-def psql_connectionstring(scalefactor: int = 0):
-    if scalefactor not in DATABASES.keys():
-        raise ValueError("This TPC-H scalefactor is not supported")
-    pg_db = DATABASES[scalefactor]
-    return f"postgresql://{PG_USER}:{PG_PW}@{PG_HOST}/{pg_db}"
-
-def sqlserver_connectionstring(scalefactor: int = 0):
-    if scalefactor not in DATABASES.keys():
-        raise ValueError("This TPC-H scalefactor is not supported")
-    db = DATABASES[scalefactor]
-    return f"mssql+pyodbc://{SQLSERVER_USER}:{SQLSERVER_PW}@{SQLSERVER_HOST}/{db}?driver=SQL+Server+Native+Client+11.0"
+def connectionstring():
+    db = MASTER_DATABASES[SQL_FLAVOR] if DB_SCALEFACTOR == 0 else DATABASES[DB_SCALEFACTOR]
+    if SQL_FLAVOR == "sqlserver":
+        return f"mssql+pyodbc://{SQLSERVER_USER}:{SQLSERVER_PW}@{SQLSERVER_HOST}/{db}?driver=SQL+Server+Native+Client+11.0"
+    else: 
+        return f"postgresql://{PG_USER}:{PG_PW}@{PG_HOST}/{db}"
 
 def create_connection():
-    if SQL_FLAVOR == "sqlserver":
-        return create_engine(sqlserver_connectionstring(0.01))    
-    else: 
-        return create_engine(psycopg2_connection_string())
+    print(connectionstring())
+    return create_engine(connectionstring())    
 
 TPCH_CREATE_TABLE_COMMAND = """
    create table nation  ( n_nationkey  integer not null,

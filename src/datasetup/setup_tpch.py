@@ -39,8 +39,6 @@ def execute_sql(statement: str, connstring: str):
 def execute_sqlserver_sql(statement: str, database: str):
     subprocess.call([SQLCMD_PATH, "-S", SQLSERVER_HOST, "-U", SQLSERVER_USER, "-P", SQLSERVER_PW, "-d",  database, "-Q", statement])
 
-
-
 def setup(scalefactors: List[float], tables: List[str]):
     master_connstring = psql_connectionstring(0)
     # recreate databases doesn't work if other connections are active...
