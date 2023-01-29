@@ -34,6 +34,11 @@ RELATED_WORK_PIPELINES = {
     {   "very_simple_pipeline.py" : "grizzly_very_simple_pipeline.py",
         "simple_pipeline.py" : "grizzly_simple_pipeline.py",
         "medium_pipeline.py" : "grizzly_medium_pipeline.py"
+    },
+    "sqlserver":{
+        "very_simple_pipeline.py" : "sqlserver_very_simple_pipeline.py",
+        "simple_pipeline.py" : "sqlserver_simple_pipeline.py",
+        "medium_pipeline.py" : "sqlserver_medium_pipeline.py"
     }
     # Microsoft etc. tbd.
 }

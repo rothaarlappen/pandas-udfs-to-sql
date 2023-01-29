@@ -39,6 +39,7 @@ def create_connection():
     print(connectionstring())
     return create_engine(connectionstring())    
 
+# TODO (Paul): Change datatype from decimal to float in sql server.... 
 TPCH_CREATE_TABLE_COMMAND = """
    create table nation  ( n_nationkey  integer not null,
                                 n_name       char(25) not null,        
