@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 from sqlalchemy import create_engine
 
 DATABASES = {
-    0: "idp",  # first db....
+    0: "master",  # first db....
     0.01: "tpch_sf_001",
     0.1: "tpch_sf_01",
     1: "tpch_sf_1",
@@ -16,6 +16,12 @@ PG_PW = os.getenv("pg_pw")
 PG_HOST = os.getenv("pg_host")
 PG_USER = os.getenv("pg_user")
 PG_SCALEFACTOR = float(os.getenv("pg_scalefactor") or 0)
+
+SQLSERVER_PW = os.getenv("sqlserver_pw")
+SQLSERVER_HOST = os.getenv("sqlserver_host")
+SQLSERVER_USER = os.getenv("sqlserver_user")
+SQLSERVER_SCALEFACTOR = float(os.getenv("sqlserver_scalefactor") or 0)
+SQLSERVER_SERVER = os.getenv("sqlserver_server")
 
 
 def psycopg2_connection_string(scalefactor: int = 0):
@@ -30,6 +36,13 @@ def psql_connectionstring(scalefactor: int = 0):
         raise ValueError("This TPC-H scalefactor is not supported")
     pg_db = DATABASES[scalefactor]
     return f"postgresql://{PG_USER}:{PG_PW}@{PG_HOST}/{pg_db}"
+
+# def execute_sqlcmd(sqlcmd : str, statement : str,  scalefactor: int = 0):
+#     if scalefactor not in DATABASES.keys():
+#         raise ValueError("This TPC-H scalefactor is not supported")
+#     subprocess.call([PSQL_PATH, "-c", statement, connstring])
+
+
 
 
 def create_connection():
