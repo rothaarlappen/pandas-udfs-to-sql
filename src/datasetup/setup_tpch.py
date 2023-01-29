@@ -113,12 +113,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="setup_tpch")
     parser.add_argument("-sf", "--scalefactor")
     parser.add_argument("-t", "--table")
-    
+    parser.add_argument("-f", "--flavor")
     args = parser.parse_args()
     tables: List[str] = [args.table] if args.table else tpch_tables
     scalefactor: List[float] = (
         [float(args.scalefactor)] if args.scalefactor else tpch_scalefactors
     )
-
-    setup_sqlserver(scalefactor, tables)
-    # execute_sqlserver_sql("CREATE DATABASE TEST_DB_IDP", "master")
+    print(args)
+    if args.flavor == "sqlserver":
+        setup_sqlserver(scalefactor, tables)
+    else: 
+        setup(scalefactor, tables)
