@@ -14,12 +14,13 @@ pipeline_directory = path.join(
     path.dirname(path.dirname(path.abspath(__file__))), "testqueries"
 )
 
-# C:\Python310\python.exe       -> python 
-# /root/anaconda3/bin/python3   -> python3 
+# C:\Python310\python.exe       -> python
+# /root/anaconda3/bin/python3   -> python3
 # /root/anaconda3/bin/python    -> python
 PYTHON = path.basename(sys.executable).split(".")[0]
 
 DATAFRAME_COMMAND = ["to_sql", "head"]
+RAW_PIPELINES = ["very_simple_pipeline", "simple_pipeline", "medium_pipeline"]
 PIPELINES = {
     "to_sql": ["very_simple_pipeline.py", "simple_pipeline.py", "medium_pipeline.py"],
     "head": [
@@ -30,10 +31,15 @@ PIPELINES = {
 }
 
 RELATED_WORK_PIPELINES = {
-    "grizzly": 
-    {   "very_simple_pipeline.py" : "grizzly_very_simple_pipeline.py",
-        "simple_pipeline.py" : "grizzly_simple_pipeline.py",
-        "medium_pipeline.py" : "grizzly_medium_pipeline.py"
+    "grizzly": {
+        "very_simple_pipeline": "grizzly_very_simple_pipeline.py",
+        "simple_pipeline": "grizzly_simple_pipeline.py",
+        "medium_pipeline": "grizzly_medium_pipeline.py",
+    },
+    "sql_native": {
+        "very_simple_pipeline": "sql_very_simple_pipeline.py",
+        "simple_pipeline": "sql_simple_pipeline.py",
+        "medium_pipeline": "sql_medium_pipeline.py",
     }
     # Microsoft etc. tbd.
 }
@@ -85,8 +91,9 @@ def time_pipeline_execution(
 
 
 def main():
+    # bench this project:
     benchmark_results = {}
-    for df_command in DATAFRAME_COMMAND:
+     for df_command in DATAFRAME_COMMAND:
         benchmark_results_type = benchmark_results.setdefault(df_command, {})
         for pipeline in PIPELINES[df_command]:
             benchmark_results_pipeline = benchmark_results_type.setdefault(pipeline, {})
@@ -105,23 +112,33 @@ def main():
                     "setup", setup_file, benchmark_results_pipeline_persist
                 )
                 time_pipeline_execution(
-                    "converted", converted_pipeline_file, benchmark_results_pipeline_persist
+                    "converted",
+                    converted_pipeline_file,
+                    benchmark_results_pipeline_persist,
                 )
                 time_pipeline_execution(
                     "original", pipeline_file, benchmark_results_pipeline_persist
                 )
-                
-                for system in RELATED_WORK_PIPELINES.keys():
-                    third_party_pipeline = RELATED_WORK_PIPELINES[system].get(pipeline, None)
-                    if third_party_pipeline is None:
-                        break
-                    pipeline_file = path.join(pipeline_directory, third_party_pipeline)
-                    time_pipeline_execution(
-                        system, pipeline_file, benchmark_results_pipeline_persist
-                    )
+
+    # bench related work/systems:
+    # ignoring different persist modes, as they don't seem to have a big impact on runtime
+    related_benchmark_results = {}
+    for pipeline in RAW_PIPELINES:
+        benchmark_results_pipeline = related_benchmark_results.setdefault(pipeline, {})
+        for system in RELATED_WORK_PIPELINES.keys():
+            benchmark_results_system = benchmark_results_pipeline.setdefault(system, {})
+            third_party_pipeline = RELATED_WORK_PIPELINES[system].get(pipeline, None)
+            if third_party_pipeline is None:
+                print(f"Pipeline mapping missing for {pipeline} in {system}")
+                break
+            pipeline_file = path.join(pipeline_directory, third_party_pipeline)
+            time_pipeline_execution(system, pipeline_file, benchmark_results_system)
 
     with open("benchmark_log.json", "a") as log:
         log.write(json.dumps(benchmark_results))
+
+    with open("related_benchmark_log.json", "a") as log:
+        log.write(json.dumps(related_benchmark_results))
 
 
 if __name__ == "__main__":
