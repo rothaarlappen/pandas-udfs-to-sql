@@ -17,6 +17,7 @@ from typing import List
 PSQL_PATH = "C:\\Program Files\\PostgreSQL\\13\\bin\\psql.exe"
 SQLCMD_PATH = "C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\SQLCMD.EXE"
 DATA_PATH = "C:\\Users\\Paul\\Desktop\\HPI\\BP\\TPC-H_Tools_v3.0.0\\dbgen\\"
+BCP_PATH = "C:\\Program Files\\Microsoft SQL Server\\Client SDK\\ODBC\\170\\Tools\\Binn\\bcp.exe"
 
 DATA_DIRS = {0.01: "10MB", 0.1: "100MB", 1: "1GB", 5: "5GB", 10: "10GB"}
 
@@ -38,6 +39,9 @@ def execute_sql(statement: str, connstring: str):
 
 def execute_sqlserver_sql(statement: str, database: str):
     subprocess.call([SQLCMD_PATH, "-S", SQLSERVER_HOST, "-U", SQLSERVER_USER, "-P", SQLSERVER_PW, "-d",  database, "-Q", statement])
+
+def execute_sqlserver_bcp(table: str, database: str, file):
+    subprocess.call([BCP_PATH, table, "in", file,  "-S", SQLSERVER_HOST, "-U", SQLSERVER_USER, "-P", SQLSERVER_PW, "-d",  database, "-t", "|", "-c"])
 
 def setup(scalefactors: List[float], tables: List[str]):
     master_connstring = psql_connectionstring(scalefactor=0)
@@ -96,14 +100,7 @@ def setup_sqlserver(scalefactors: List[float], tables: List[str]):
         for table in tables:
             print(f"{DATABASES[sf]} : {table.capitalize()}")
             data_path = path.join(DATA_PATH, DATA_DIRS[sf], table + ".tbl")
-            command = (
-                "BULK INSERT "
-                + table
-                + " FROM '"
-                + data_path
-                + "' WITH ( FORMAT = 'CSV', FIELDTERMINATOR='|');"
-            )
-            execute_sqlserver_sql(command, DATABASES[sf])
+            execute_sqlserver_bcp (table,  DATABASES[sf], data_path)
     return 
 
 if __name__ == "__main__":
