@@ -5,12 +5,12 @@ from os import path
 
 sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 from database import (
-    psql_connectionstring,
+    connectionstring as psql_connectionstring,
     DATABASES,
     TPCH_CREATE_TABLE_COMMAND,
     TPCH_DROP_TABLE_IF_EXIST_COMMAND,
     
-    SQLSERVER_HOST, SQLSERVER_PW, SQLSERVER_USER, SQLSERVER_SCALEFACTOR, SQLSERVER_SERVER
+    SQLSERVER_HOST, SQLSERVER_PW, SQLSERVER_USER
 )
 from typing import List
 
@@ -40,7 +40,7 @@ def execute_sqlserver_sql(statement: str, database: str):
     subprocess.call([SQLCMD_PATH, "-S", SQLSERVER_HOST, "-U", SQLSERVER_USER, "-P", SQLSERVER_PW, "-d",  database, "-Q", statement])
 
 def setup(scalefactors: List[float], tables: List[str]):
-    master_connstring = psql_connectionstring(0)
+    master_connstring = psql_connectionstring(scalefactor=0)
     # recreate databases doesn't work if other connections are active...
     for sf in scalefactors:
         dbname = DATABASES[sf]
@@ -48,16 +48,16 @@ def setup(scalefactors: List[float], tables: List[str]):
         execute_sql(f"DROP DATABASE {dbname} WITH (FORCE);", master_connstring)
         execute_sql(f"CREATE DATABASE {dbname};", master_connstring)
 
-        db_connstring = psql_connectionstring(sf)  # this database should exist now
+        db_connstring = psql_connectionstring(scalefactor=sf)  # this database should exist now
         execute_sql(
             f"CREATE EXTENSION IF NOT EXISTS plpython3u", db_connstring
         )  # we create python extension to allow for python UDFs
 
     # fill with tpc-h data
     for sf in scalefactors:
-        db_connstring = psql_connectionstring(sf)
+        db_connstring = psql_connectionstring(scalefactor=sf)
         subprocess.call(
-            [PSQL_PATH, "-c", TPCH_DROP_TABLE_IF_EXIST_COMMAND, db_connstring]
+            [PSQL_PATH, "-c", TPCH_DROP_TABLE_IF_EXIST_COMMAND(), db_connstring]
         )
         print(f"Creating tables for {DATABASES[sf]}")
         execute_sql(TPCH_CREATE_TABLE_COMMAND, db_connstring)
@@ -73,7 +73,7 @@ def setup(scalefactors: List[float], tables: List[str]):
                 + "' with (format csv, delimiter '|');"
             )
             execute_sql(command, db_connstring)
-
+# TODO (Paul): refactor both setup-scripts and remove redundancy...
 def setup_sqlserver(scalefactors: List[float], tables: List[str]):
     master_name = "master"
     # recreate databases doesn't work if other connections are active...
@@ -83,14 +83,13 @@ def setup_sqlserver(scalefactors: List[float], tables: List[str]):
         execute_sqlserver_sql(f"DROP DATABASE {dbname};", master_name)
         execute_sqlserver_sql(f"CREATE DATABASE {dbname};", master_name)
 
-        db_connstring = psql_connectionstring(sf)  # this database should exist now
         execute_sqlserver_sql(
             f"sp_configure 'external scripts enabled', 1; RECONFIGURE WITH OVERRIDE;", dbname
         )  # we configure the server to allow for python UDFs
 
     # fill with tpc-h data
     for sf in scalefactors:
-        execute_sqlserver_sql(TPCH_DROP_TABLE_IF_EXIST_COMMAND, DATABASES[sf])
+        execute_sqlserver_sql(TPCH_DROP_TABLE_IF_EXIST_COMMAND("sqlserver"), DATABASES[sf])
         print(f"Creating tables for {DATABASES[sf]}")
         execute_sqlserver_sql(TPCH_CREATE_TABLE_COMMAND, DATABASES[sf])
 

@@ -24,13 +24,13 @@ SQLSERVER_PW = os.getenv("sqlserver_pw")
 SQLSERVER_HOST = os.getenv("sqlserver_host")
 SQLSERVER_USER = os.getenv("sqlserver_user")
 
-# TODO: change to db_scalefactor
+# TODO: change env-name to db_scalefactor
 DB_SCALEFACTOR = float(os.getenv("pg_scalefactor") or 0)
 SQL_FLAVOR = os.getenv("flavor")
 
-def connectionstring():
-    db = MASTER_DATABASES[SQL_FLAVOR] if DB_SCALEFACTOR == 0 else DATABASES[DB_SCALEFACTOR]
-    if SQL_FLAVOR == "sqlserver":
+def connectionstring(sql_flavor : str = SQL_FLAVOR, scalefactor : str = DB_SCALEFACTOR):
+    db = MASTER_DATABASES[sql_flavor] if scalefactor == 0 else DATABASES[scalefactor]
+    if sql_flavor == "sqlserver":
         return f"mssql+pyodbc://{SQLSERVER_USER}:{SQLSERVER_PW}@{SQLSERVER_HOST}/{db}?driver=SQL+Server+Native+Client+11.0"
     else: 
         return f"postgresql://{PG_USER}:{PG_PW}@{PG_HOST}/{db}"
@@ -39,7 +39,6 @@ def create_connection():
     print(connectionstring())
     return create_engine(connectionstring())    
 
-# TODO (Paul): Change datatype from decimal to float in sql server.... 
 TPCH_CREATE_TABLE_COMMAND = """
    create table nation  ( n_nationkey  integer not null,
                                 n_name       char(25) not null,        
@@ -57,7 +56,7 @@ TPCH_CREATE_TABLE_COMMAND = """
                             p_type        varchar(25) not null,        
                             p_size        integer not null,
                             p_container   char(10) not null,
-                            p_retailprice decimal(15,2) not null,      
+                            p_retailprice float not null,      
                             p_comment     varchar(23) not null );      
 
     create table supplier ( s_suppkey     integer not null,
@@ -65,13 +64,13 @@ TPCH_CREATE_TABLE_COMMAND = """
                                 s_address     varchar(40) not null,    
                                 s_nationkey   integer not null,        
                                 s_phone       char(15) not null,       
-                                s_acctbal     decimal(15,2) not null,  
+                                s_acctbal     float not null,  
                                 s_comment     varchar(101) not null);  
 
     create table partsupp ( ps_partkey     integer not null,
                                 ps_suppkey     integer not null,       
                                 ps_availqty    integer not null,       
-                                ps_supplycost  decimal(15,2)  not null,
+                                ps_supplycost  float  not null,
                                 ps_comment     varchar(199) not null );
 
     create table customer ( c_custkey     integer not null,
@@ -79,14 +78,14 @@ TPCH_CREATE_TABLE_COMMAND = """
                                 c_address     varchar(40) not null,
                                 c_nationkey   integer not null,
                                 c_phone       char(15) not null,
-                                c_acctbal     decimal(15,2)   not null,
+                                c_acctbal     float   not null,
                                 c_mktsegment  char(10) not null,
                                 c_comment     varchar(117) not null);
 
     create table orders  ( o_orderkey       integer not null,
                             o_custkey        integer not null,
                             o_orderstatus    char(1) not null,
-                            o_totalprice     decimal(15,2) not null,
+                            o_totalprice     float not null,
                             o_orderdate      date not null,
                             o_orderpriority  char(15) not null,
                             o_clerk          char(15) not null,
@@ -97,10 +96,10 @@ TPCH_CREATE_TABLE_COMMAND = """
                                 l_partkey     integer not null,
                                 l_suppkey     integer not null,
                                 l_linenumber  integer not null,
-                                l_quantity    decimal(15,2) not null,
-                                l_extendedprice  decimal(15,2) not null,
-                                l_discount    decimal(15,2) not null,
-                                l_tax         decimal(15,2) not null,
+                                l_quantity    float not null,
+                                l_extendedprice  float not null,
+                                l_discount    float not null,
+                                l_tax         float not null,
                                 l_returnflag  char(1) not null,
                                 l_linestatus  char(1) not null,
                                 l_shipdate    date not null,
@@ -110,13 +109,17 @@ TPCH_CREATE_TABLE_COMMAND = """
                                 l_shipmode     char(10) not null,
                                 l_comment      varchar(44) not null);
 """
-TPCH_DROP_TABLE_IF_EXIST_COMMAND = """
-    DROP TABLE IF EXISTS orders;
-    DROP TABLE IF EXISTS customer;
-    DROP TABLE IF EXISTS lineitem;
-    DROP TABLE IF EXISTS nation;
-    DROP TABLE IF EXISTS partsupp;
-    DROP TABLE IF EXISTS part;
-    DROP TABLE IF EXISTS region;
-    DROP TABLE IF EXISTS supplier;
-"""
+
+# TODO (Paul)... Refactor...
+def TPCH_DROP_TABLE_IF_EXIST_COMMAND (flavor : str = "postgresql"):
+    suffix : str = "CASCADE" if flavor == "postgresql" else "";
+    return f"""
+    DROP TABLE IF EXISTS orders {suffix};
+    DROP TABLE IF EXISTS customer {suffix};
+    DROP TABLE IF EXISTS lineitem {suffix};
+    DROP TABLE IF EXISTS nation {suffix};
+    DROP TABLE IF EXISTS partsupp {suffix};
+    DROP TABLE IF EXISTS part {suffix};
+    DROP TABLE IF EXISTS region {suffix};
+    DROP TABLE IF EXISTS supplier {suffix};
+    """
