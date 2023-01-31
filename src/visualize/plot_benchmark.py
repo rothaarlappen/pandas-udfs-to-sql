@@ -155,11 +155,11 @@ if __name__ == "__main__":
                                 ][MAP_EXTERNAL_PIPELINE[pipeline]].values()
                             )
                         ),
-                        "name": "scan_table",
+                        "name": "scan_table_materialize",
                     }
                 )
                 labels.append("native SQL")
-                labels.append("scan Table")
+                labels.append("scan Table & materialize")
                 bars_per_point += 2
             if df_command == "head":
 

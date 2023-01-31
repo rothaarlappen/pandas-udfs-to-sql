@@ -6,4 +6,4 @@ from database import create_connection
 
 
 conn = create_connection()
-conn.execute("SELECT * FROM orders")
+conn.execute("CREATE MATERIALIZED VIEW table_new AS SELECT * FROM orders")
