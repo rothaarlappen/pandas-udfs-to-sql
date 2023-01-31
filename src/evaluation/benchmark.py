@@ -31,6 +31,11 @@ PIPELINES = {
 }
 
 RELATED_WORK_PIPELINES = {
+    "scan_table": {
+        "very_simple_pipeline": "scan_table.py",
+        "simple_pipeline": "scan_table.py",
+        "medium_pipeline": "scan_table.py",
+    },
     "grizzly": {
         "very_simple_pipeline": "grizzly_very_simple_pipeline.py",
         "simple_pipeline": "grizzly_simple_pipeline.py",

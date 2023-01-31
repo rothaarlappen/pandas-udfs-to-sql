@@ -101,6 +101,7 @@ if __name__ == "__main__":
 
     grizzly_runtimes_on_scalefactor_by_udf = {}
     native_runtimes_on_scalefactor_by_udf = {}
+    scan_runtimes_on_scalefactor_by_udf = {}
     for benchmark in get_all_external_combinations(grizzly_log):
         if benchmark["system"] == "grizzly":
             grizzly_runtimes_on_scalefactor_by_udf.setdefault(
@@ -110,6 +111,12 @@ if __name__ == "__main__":
             )
         if benchmark["system"] == "sql_native":
             native_runtimes_on_scalefactor_by_udf.setdefault(
+                benchmark["count"], {}
+            ).setdefault(benchmark["pipeline"], {}).setdefault(
+                benchmark["sf"], benchmark["med"]
+            )
+        if benchmark["system"] == "scan":
+            scan_runtimes_on_scalefactor_by_udf.setdefault(
                 benchmark["count"], {}
             ).setdefault(benchmark["pipeline"], {}).setdefault(
                 benchmark["sf"], benchmark["med"]
@@ -136,11 +143,24 @@ if __name__ == "__main__":
                                 ][MAP_EXTERNAL_PIPELINE[pipeline]].values()
                             )
                         ),
-                        "name": "grizzly",
+                        "name": "native",
+                    }
+                )
+                bars.append(
+                    {
+                        "data": np.asarray(
+                            list(
+                                scan_runtimes_on_scalefactor_by_udf[
+                                    PIPELINE_TO_COUNT[pipeline]
+                                ][MAP_EXTERNAL_PIPELINE[pipeline]].values()
+                            )
+                        ),
+                        "name": "scan_table",
                     }
                 )
                 labels.append("native SQL")
-                bars_per_point += 1
+                labels.append("scan Table")
+                bars_per_point += 2
             if df_command == "head":
 
                 bars.append(
