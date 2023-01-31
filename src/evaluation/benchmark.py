@@ -93,7 +93,7 @@ def time_pipeline_execution(
 def main():
     # bench this project:
     benchmark_results = {}
-     for df_command in DATAFRAME_COMMAND:
+    for df_command in DATAFRAME_COMMAND:
         benchmark_results_type = benchmark_results.setdefault(df_command, {})
         for pipeline in PIPELINES[df_command]:
             benchmark_results_pipeline = benchmark_results_type.setdefault(pipeline, {})
@@ -134,10 +134,10 @@ def main():
             pipeline_file = path.join(pipeline_directory, third_party_pipeline)
             time_pipeline_execution(system, pipeline_file, benchmark_results_system)
 
-    with open("benchmark_log.json", "a") as log:
+    with open("data/benchmark_log.json", "a") as log:
         log.write(json.dumps(benchmark_results))
 
-    with open("related_benchmark_log.json", "a") as log:
+    with open("data/related_benchmark_log.json", "a") as log:
         log.write(json.dumps(related_benchmark_results))
 
 
