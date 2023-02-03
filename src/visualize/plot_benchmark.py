@@ -1,21 +1,36 @@
 import matplotlib.pyplot as plt
-import argparse
 import json
 import numpy as np
-from evaluation.benchmark import (
+
+
+from src.evaluation.benchmark import (
     DATAFRAME_COMMAND,
     PIPELINES,
     PERSIST_MODES,
+    RAW_PIPELINES,
+    RELATED_WORK_PIPELINES,
     SCALE_FACTORS,
 )
 
 PIPELINE_TO_COUNT = {
+    "very_simple_pipeline": 1,
+    "simple_pipeline": 3,
+    "medium_pipeline": 10,
     "very_simple_pipeline.py": 1,
     "simple_pipeline.py": 3,
     "medium_pipeline.py": 10,
     "head_very_simple_pipeline.py": 1,
     "head_simple_pipeline.py": 3,
     "head_medium_pipeline.py": 10,
+}
+
+MAP_EXTERNAL_PIPELINE = {
+    "head_very_simple_pipeline.py": "very_simple_pipeline",
+    "head_simple_pipeline.py": "simple_pipeline",
+    "head_medium_pipeline.py": "medium_pipeline",
+    "very_simple_pipeline.py": "very_simple_pipeline",
+    "simple_pipeline.py": "simple_pipeline",
+    "medium_pipeline.py": "medium_pipeline",
 }
 TYPES = ["converted", "original"]  # , "setup"]
 
@@ -49,28 +64,26 @@ def get_all_combinations(log):
                         }
 
 
-def get_all_grizzly_combinations(log):
-    command_log = log["head"]
-    for pipeline in PIPELINES["head"]:
-        for sf in SCALE_FACTORS:
-            benchmark = command_log[pipeline][str(sf)]["grizzly"]
-            yield {
-                "pipeline": pipeline,
-                "sf": sf,
-                "count": PIPELINE_TO_COUNT[pipeline],
-                "runtimes": benchmark["times"],
-                "med": benchmark["med"],
-            }
+def get_all_external_combinations(log):
+    for pipeline in RAW_PIPELINES:
+        pipeline_log = log[pipeline]
+        for system in RELATED_WORK_PIPELINES.keys():
+            system_log = pipeline_log[system]
+            for sf in SCALE_FACTORS:
+                benchmark = system_log[str(sf)][system]
+                yield {
+                    "pipeline": pipeline,
+                    "sf": sf,
+                    "system": system,
+                    "count": PIPELINE_TO_COUNT[pipeline],
+                    "runtimes": benchmark["times"],
+                    "med": benchmark["med"],
+                }
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(prog="Visualize")
-    parser.add_argument("log", type=str, help="path to log that is to be visualized")
-
-    args = parser.parse_args()
-
-    log = load_log(args.log)
-    grizzly_log = load_log("grizzly_benchmark.json")
+    log = load_log("data/benchmark.json")
+    grizzly_log = load_log("data/external_benchmark.json")
 
     runtimes_on_scalefactor_by_udf = {}
     for benchmark in get_all_combinations(log):
@@ -87,12 +100,27 @@ if __name__ == "__main__":
         )
 
     grizzly_runtimes_on_scalefactor_by_udf = {}
-    for benchmark in get_all_grizzly_combinations(grizzly_log):
-        grizzly_runtimes_on_scalefactor_by_udf.setdefault(
-            benchmark["count"], {}
-        ).setdefault(benchmark["pipeline"], {}).setdefault(
-            benchmark["sf"], benchmark["med"]
-        )
+    native_runtimes_on_scalefactor_by_udf = {}
+    scan_runtimes_on_scalefactor_by_udf = {}
+    for benchmark in get_all_external_combinations(grizzly_log):
+        if benchmark["system"] == "grizzly":
+            grizzly_runtimes_on_scalefactor_by_udf.setdefault(
+                benchmark["count"], {}
+            ).setdefault(benchmark["pipeline"], {}).setdefault(
+                benchmark["sf"], benchmark["med"]
+            )
+        if benchmark["system"] == "sql_native":
+            native_runtimes_on_scalefactor_by_udf.setdefault(
+                benchmark["count"], {}
+            ).setdefault(benchmark["pipeline"], {}).setdefault(
+                benchmark["sf"], benchmark["med"]
+            )
+        if benchmark["system"] == "scan":
+            scan_runtimes_on_scalefactor_by_udf.setdefault(
+                benchmark["count"], {}
+            ).setdefault(benchmark["pipeline"], {}).setdefault(
+                benchmark["sf"], benchmark["med"]
+            )
 
     print(runtimes_on_scalefactor_by_udf)
     print(grizzly_runtimes_on_scalefactor_by_udf)
@@ -105,14 +133,43 @@ if __name__ == "__main__":
             bars_per_point = 0
             bars = []
             labels = []
+            if df_command == "to_sql":
+                bars.append(
+                    {
+                        "data": np.asarray(
+                            list(
+                                native_runtimes_on_scalefactor_by_udf[
+                                    PIPELINE_TO_COUNT[pipeline]
+                                ][MAP_EXTERNAL_PIPELINE[pipeline]].values()
+                            )
+                        ),
+                        "name": "native",
+                    }
+                )
+                bars.append(
+                    {
+                        "data": np.asarray(
+                            list(
+                                scan_runtimes_on_scalefactor_by_udf[
+                                    PIPELINE_TO_COUNT[pipeline]
+                                ][MAP_EXTERNAL_PIPELINE[pipeline]].values()
+                            )
+                        ),
+                        "name": "scan_table_materialize",
+                    }
+                )
+                labels.append("native SQL")
+                labels.append("scan Table & materialize")
+                bars_per_point += 2
             if df_command == "head":
+
                 bars.append(
                     {
                         "data": np.asarray(
                             list(
                                 grizzly_runtimes_on_scalefactor_by_udf[
                                     PIPELINE_TO_COUNT[pipeline]
-                                ][pipeline].values()
+                                ][MAP_EXTERNAL_PIPELINE[pipeline]].values()
                             )
                         ),
                         "name": "grizzly",
@@ -165,6 +222,6 @@ if __name__ == "__main__":
             plt.legend(bar_references, labels)
             plt.title(f"{df_command} Runtimes @ {PIPELINE_TO_COUNT[pipeline]} UDF")
             plt.savefig(
-                f"plots/{df_command}_runtimes_{PIPELINE_TO_COUNT[pipeline]}_UDF.png"
+                f"src/plots/{df_command}_runtimes_{PIPELINE_TO_COUNT[pipeline]}_UDF.png"
             )
             plt.show()
