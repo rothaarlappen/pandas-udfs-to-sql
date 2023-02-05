@@ -95,6 +95,7 @@ def time_pipeline_execution(
     f = StringIO()
     for scale_factor in SCALE_FACTORS:
         set_key(".env", "pg_scalefactor", str(scale_factor))
+        set_key(".env", "flavor", str(sql_flavor))
         times = []
         for _ in range(repetitions):
             with redirect_stdout(f):
