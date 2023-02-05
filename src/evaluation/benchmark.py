@@ -49,6 +49,10 @@ RELATED_WORK_PIPELINES = {
     # Microsoft etc. tbd.
 }
 
+UDA_PIPELINES = {
+    "uda_simple_pipeline.py" : [ "manually_converted_setup_uda_simple_pipeline.py" ,  "manually_converted_uda_simple_pipeline.py"] ,
+}
+
 PERSIST_MODES = {"to_sql": ["MATERIALIZED_VIEW", "NEW_TABLE"], "head": ["NONE"]}
 SCALE_FACTORS = [0.01, 0.1, 1.0, 5.0, 10.0]
 REPETITIONS = 5
@@ -139,12 +143,34 @@ def main():
             pipeline_file = path.join(pipeline_directory, third_party_pipeline)
             time_pipeline_execution(system, pipeline_file, benchmark_results_system)
 
+    uda_benchmark_results = {}
+    for pipeline in UDA_PIPELINES.keys():
+        benchmark_results_type = uda_benchmark_results.setdefault(pipeline, {})
+
+        pipeline_file = path.join(pipeline_directory, pipeline)
+        setup_file = path.join(pipeline_directory, UDA_PIPELINES[pipeline][0])
+        converted_pipeline_file = path.join(pipeline_directory, UDA_PIPELINES[pipeline][1])
+
+        time_pipeline_execution(
+            "setup", setup_file, benchmark_results_type
+        )
+        time_pipeline_execution(
+            "converted",
+            converted_pipeline_file,
+            benchmark_results_type,
+        )
+        time_pipeline_execution(
+            "original", pipeline_file, benchmark_results_type
+        )
+
     with open("data/benchmark_log.json", "a") as log:
         log.write(json.dumps(benchmark_results))
 
     with open("data/related_benchmark_log.json", "a") as log:
         log.write(json.dumps(related_benchmark_results))
 
+    with open("data/uda_benchmark_results.json", "a") as log:
+        log.write(json.dumps(uda_benchmark_results))
 
 if __name__ == "__main__":
     main()
