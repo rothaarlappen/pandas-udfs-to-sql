@@ -36,7 +36,6 @@ def connectionstring(sql_flavor : str = SQL_FLAVOR, scalefactor : str = DB_SCALE
         return f"postgresql://{PG_USER}:{PG_PW}@{PG_HOST}/{db}"
 
 def create_connection():
-    print(connectionstring())
     return create_engine(connectionstring())    
 
 TPCH_CREATE_TABLE_COMMAND = """

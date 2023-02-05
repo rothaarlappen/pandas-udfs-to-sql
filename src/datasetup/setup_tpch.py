@@ -79,13 +79,13 @@ def setup(scalefactors: List[float], tables: List[str]):
             execute_sql(command, db_connstring)
 # TODO (Paul): refactor both setup-scripts and remove redundancy...
 def setup_sqlserver(scalefactors: List[float], tables: List[str]):
-    master_name = "master"
+    default_db = "master"
     # recreate databases doesn't work if other connections are active...
     for sf in scalefactors:
         dbname = DATABASES[sf]
         print(f"Creating database {dbname}")
-        execute_sqlserver_sql(f"DROP DATABASE {dbname};", master_name)
-        execute_sqlserver_sql(f"CREATE DATABASE {dbname};", master_name)
+        execute_sqlserver_sql(f"DROP DATABASE {dbname};", default_db)
+        execute_sqlserver_sql(f"CREATE DATABASE {dbname};", default_db)
 
         execute_sqlserver_sql(
             f"sp_configure 'external scripts enabled', 1; RECONFIGURE WITH OVERRIDE;", dbname
