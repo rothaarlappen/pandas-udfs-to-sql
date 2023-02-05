@@ -32,21 +32,37 @@ PIPELINES = {
 
 RELATED_WORK_PIPELINES = {
     "scan_table_materialize": {
-        "very_simple_pipeline": "scan_table_materialize.py",
-        "simple_pipeline": "scan_table_materialize.py",
-        "medium_pipeline": "scan_table_materialize.py",
+        "flavors" : ["postgresql"],
+        "pipelinemapping" : {
+            "very_simple_pipeline": "scan_table_materialize.py",
+            "simple_pipeline": "scan_table_materialize.py",
+            "medium_pipeline": "scan_table_materialize.py",
+        }
     },
     "grizzly": {
-        "very_simple_pipeline": "grizzly_very_simple_pipeline.py",
-        "simple_pipeline": "grizzly_simple_pipeline.py",
-        "medium_pipeline": "grizzly_medium_pipeline.py",
+        "flavors" : ["postgresql"],
+        "pipelinemapping" : {
+            "very_simple_pipeline": "grizzly_very_simple_pipeline.py",
+            "simple_pipeline": "grizzly_simple_pipeline.py",
+            "medium_pipeline": "grizzly_medium_pipeline.py",
+        }
     },
     "sql_native": {
-        "very_simple_pipeline": "sql_very_simple_pipeline.py",
-        "simple_pipeline": "sql_simple_pipeline.py",
-        "medium_pipeline": "sql_medium_pipeline.py",
+        "flavors" : ["postgresql", "sqlserver"],
+        "pipelinemapping" : {
+            "very_simple_pipeline": "sql_very_simple_pipeline.py",
+            "simple_pipeline": "sql_simple_pipeline.py",
+            "medium_pipeline": "sql_medium_pipeline.py",
+        }
+    },
+    "sql_server_translated":{
+        "flavors" : ["sqlserver"],
+        "pipelinemapping" :{
+            "very_simple_pipeline": "sqlserver_very_simple_pipeline.py",
+            "simple_pipeline": "sqlserver_simple_pipeline.py",
+            "medium_pipeline": "sqlserver_medium_pipeline.py",
+        }
     }
-    # Microsoft etc. tbd.
 }
 
 PERSIST_MODES = {"to_sql": ["MATERIALIZED_VIEW", "NEW_TABLE"], "head": ["NONE"]}
@@ -74,7 +90,7 @@ def print_and_log(
 
 
 def time_pipeline_execution(
-    type: str, converted_pipeline: str, log: dict, repetitions=REPETITIONS
+    type: str, converted_pipeline: str, log: dict, repetitions=REPETITIONS, sql_flavor : str = "postgresql"
 ):
     f = StringIO()
     for scale_factor in SCALE_FACTORS:
@@ -124,6 +140,10 @@ def main():
                 time_pipeline_execution(
                     "original", pipeline_file, benchmark_results_pipeline_persist
                 )
+                # TODO: Stop executing this for every df_command/persist_mode...
+                time_pipeline_execution(
+                    "sqlserver", pipeline_file, benchmark_results_pipeline_persist, sql_flavor="sqlserver"
+                )
 
     # bench related work/systems:
     # ignoring different persist modes, as they don't seem to have a big impact on runtime
@@ -132,12 +152,15 @@ def main():
         benchmark_results_pipeline = related_benchmark_results.setdefault(pipeline, {})
         for system in RELATED_WORK_PIPELINES.keys():
             benchmark_results_system = benchmark_results_pipeline.setdefault(system, {})
-            third_party_pipeline = RELATED_WORK_PIPELINES[system].get(pipeline, None)
-            if third_party_pipeline is None:
-                print(f"Pipeline mapping missing for {pipeline} in {system}")
-                break
-            pipeline_file = path.join(pipeline_directory, third_party_pipeline)
-            time_pipeline_execution(system, pipeline_file, benchmark_results_system)
+            for sql_flavor in RELATED_WORK_PIPELINES[system]["flavors"]:
+                benchmark_results_flavor = benchmark_results_system.setdefault(sql_flavor, {})
+
+                third_party_pipeline = RELATED_WORK_PIPELINES[system]["pipelinemapping"].get(pipeline, None)
+                if third_party_pipeline is None:
+                    print(f"Pipeline mapping missing for {pipeline} in {system}")
+                    break
+                pipeline_file = path.join(pipeline_directory, third_party_pipeline)
+                time_pipeline_execution(system, pipeline_file, benchmark_results_flavor, sql_flavor=sql_flavor)
 
     with open("data/benchmark_log.json", "a") as log:
         log.write(json.dumps(benchmark_results))

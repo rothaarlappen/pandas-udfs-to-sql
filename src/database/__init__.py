@@ -15,7 +15,7 @@ MASTER_DATABASES = {
     "sqlserver" : "master"
 }
 
-load_dotenv()
+load_dotenv(override=True)
 PG_PW = os.getenv("pg_pw")
 PG_HOST = os.getenv("pg_host")
 PG_USER = os.getenv("pg_user")
