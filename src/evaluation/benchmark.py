@@ -50,7 +50,10 @@ RELATED_WORK_PIPELINES = {
 }
 
 UDA_PIPELINES = {
-    "uda_simple_pipeline.py" : [ "manually_converted_setup_uda_simple_pipeline.py" ,  "manually_converted_uda_simple_pipeline.py"] ,
+    "uda_simple_pipeline.py": [
+        "manually_converted_setup_uda_simple_pipeline.py",
+        "manually_converted_uda_simple_pipeline.py",
+    ],
 }
 
 PERSIST_MODES = {"to_sql": ["MATERIALIZED_VIEW", "NEW_TABLE"], "head": ["NONE"]}
@@ -128,6 +131,8 @@ def main():
                 time_pipeline_execution(
                     "original", pipeline_file, benchmark_results_pipeline_persist
                 )
+    with open("data/benchmark_log.json", "a") as log:
+        log.write(json.dumps(benchmark_results))
 
     # bench related work/systems:
     # ignoring different persist modes, as they don't seem to have a big impact on runtime
@@ -142,6 +147,8 @@ def main():
                 break
             pipeline_file = path.join(pipeline_directory, third_party_pipeline)
             time_pipeline_execution(system, pipeline_file, benchmark_results_system)
+    with open("data/related_benchmark_log.json", "a") as log:
+        log.write(json.dumps(related_benchmark_results))
 
     uda_benchmark_results = {}
     for pipeline in UDA_PIPELINES.keys():
@@ -149,28 +156,22 @@ def main():
 
         pipeline_file = path.join(pipeline_directory, pipeline)
         setup_file = path.join(pipeline_directory, UDA_PIPELINES[pipeline][0])
-        converted_pipeline_file = path.join(pipeline_directory, UDA_PIPELINES[pipeline][1])
-
-        time_pipeline_execution(
-            "setup", setup_file, benchmark_results_type
+        converted_pipeline_file = path.join(
+            pipeline_directory, UDA_PIPELINES[pipeline][1]
         )
+
+        time_pipeline_execution("setup", setup_file, benchmark_results_type)
+
+        time_pipeline_execution("setup", setup_file, benchmark_results_type)
         time_pipeline_execution(
             "converted",
             converted_pipeline_file,
             benchmark_results_type,
         )
-        time_pipeline_execution(
-            "original", pipeline_file, benchmark_results_type
-        )
-
-    with open("data/benchmark_log.json", "a") as log:
-        log.write(json.dumps(benchmark_results))
-
-    with open("data/related_benchmark_log.json", "a") as log:
-        log.write(json.dumps(related_benchmark_results))
-
+        time_pipeline_execution("original", pipeline_file, benchmark_results_type)
     with open("data/uda_benchmark_results.json", "a") as log:
         log.write(json.dumps(uda_benchmark_results))
+
 
 if __name__ == "__main__":
     main()
