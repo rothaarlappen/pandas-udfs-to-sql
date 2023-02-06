@@ -47,12 +47,21 @@ RELATED_WORK_PIPELINES = {
             "medium_pipeline": "grizzly_medium_pipeline.py",
         },
     },
+    # TODO (Paul): uniform native implementation for sqlserver and postgresql instead of hardcoding two files...
     "sql_native": {
         "flavors": ["postgresql"],
         "pipelinemapping": {
             "very_simple_pipeline": "sql_very_simple_pipeline.py",
             "simple_pipeline": "sql_simple_pipeline.py",
             "medium_pipeline": "sql_medium_pipeline.py",
+        },
+    },
+    "sql_serversql_native": {
+        "flavors": ["sqlserver"],
+        "pipelinemapping": {
+            "very_simple_pipeline": "sqlserver_sql_very_simple_pipeline.py",
+            "simple_pipeline": "sqlserver_sql_simple_pipeline.py",
+            "medium_pipeline": "sqlserver_sql_medium_pipeline.py",
         },
     },
     "sql_server_translated": {
