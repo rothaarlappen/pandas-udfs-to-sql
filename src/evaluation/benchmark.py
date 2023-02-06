@@ -22,7 +22,7 @@ PYTHON = path.basename(sys.executable).split(".")[0]
 DATAFRAME_COMMAND = ["to_sql", "head"]
 RAW_PIPELINES = ["very_simple_pipeline", "simple_pipeline", "medium_pipeline"]
 PIPELINES = {
-    "to_sql": ["very_simple_pipeline.py", "simple_pipeline.py", "medium_pipeline.py"],
+    "to_sql": ["very_simple_pipeline.py", "simple_pipeline.py", "medium_pipeline.py", "compute_intensive_pipeline.py"],
     "head": [
         "head_very_simple_pipeline.py",
         "head_simple_pipeline.py",
@@ -178,8 +178,7 @@ def main():
                     "pipelinemapping"
                 ].get(pipeline, None)
                 if third_party_pipeline is None:
-                    print(f"Pipeline mapping missing for {pipeline} in {system}")
-                    break
+                    continue
                 pipeline_file = path.join(pipeline_directory, third_party_pipeline)
                 time_pipeline_execution(
                     system,
