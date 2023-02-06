@@ -131,7 +131,7 @@ def time_pipeline_execution(
 def main():
     # bench this project:
     try:
-        with open("data/tsetse.json", "r") as log:
+        with open("data/benchmark_log.json", "r") as log:
             benchmark_results = json.load(log)
     except:
         benchmark_results = {}
