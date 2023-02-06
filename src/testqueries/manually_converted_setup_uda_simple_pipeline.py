@@ -12,7 +12,8 @@ from pandas import Timestamp
 
 conn = create_connection()
 
-conn.execute("""
+conn.execute(
+    """
 CREATE OR REPLACE FUNCTION uda_price (prices float Array)
 RETURNS float
 AS $$
@@ -22,8 +23,9 @@ if len(prices) == 0:
 prices.sort()
 if(len(prices) < 3):
 	return mean(prices)
-else: 
-	return mean([prices[0], prices[1], prices[0], prices[-1], prices[-2], prices[-3]])
-$$ LANGUAGE plpython3u    
+else:
+	return mean(prices[:3]+ prices[-3:])
+$$ LANGUAGE plpython3u
 PARALLEL SAFE;
-""")
+"""
+)
