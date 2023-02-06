@@ -201,8 +201,6 @@ def main():
         )
 
         time_pipeline_execution("setup", setup_file, benchmark_results_type)
-
-        time_pipeline_execution("setup", setup_file, benchmark_results_type)
         time_pipeline_execution(
             "converted",
             converted_pipeline_file,
