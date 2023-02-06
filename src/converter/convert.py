@@ -145,7 +145,11 @@ class SetupGenerator:
             + f"""{list(self.udf_visitor.connection_variables)[0]}.execute(f\"\"\"
                 CREATE OR REPLACE FUNCTION {function_name} ({function_info["arguments"][0].arg} {{DATATYPE_MAPPING[{function_name}_input_type]}})
                 RETURNS {{DATATYPE_MAPPING[{function_name}_output_type]}}
-                AS $${astunparse.unparse(function_info["body"])}$$
+                AS 
+                $$
+global {function_info["arguments"][0].arg}
+{astunparse.unparse(function_info["body"]).replace("%", "%%") }
+                $$
                 LANGUAGE plpython3u
                 PARALLEL SAFE;
             \"\"\")"""
