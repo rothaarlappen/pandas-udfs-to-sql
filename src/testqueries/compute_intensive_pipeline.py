@@ -11,7 +11,7 @@ conn = create_connection()
 
 def maxPrimeFactors (n):
     import math 
-    n = n % 999979
+    n = n % 150001
     maxPrime = -1
      
     while n % 2 == 0:
