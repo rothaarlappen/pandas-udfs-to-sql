@@ -125,12 +125,16 @@ def time_pipeline_execution(
 
 def main():
     # bench this project:
-    benchmark_results = {}
+    with open("data/benchmark_log.json", "r") as log:
+        benchmark_results = json.load(log)
     for df_command in DATAFRAME_COMMAND:
         benchmark_results_type = benchmark_results.setdefault(df_command, {})
         for pipeline in PIPELINES[df_command]:
             benchmark_results_pipeline = benchmark_results_type.setdefault(pipeline, {})
             for persist_mode in PERSIST_MODES[df_command]:
+                if benchmark_results_pipeline[persist_mode] != None:
+                    print(f"cache hit {df_command} {pipeline} {persist_mode}")
+                    continue
                 benchmark_results_pipeline_persist = (
                     benchmark_results_pipeline.setdefault(persist_mode, {})
                 )
@@ -159,17 +163,21 @@ def main():
                     benchmark_results_pipeline_persist,
                     sql_flavor="sqlserver",
                 )
-    with open("data/benchmark_log.json", "a") as log:
-        log.write(json.dumps(benchmark_results))
+                with open("data/benchmark_log.json", "w") as log:
+                    log.write(json.dumps(benchmark_results))
 
     # bench related work/systems:
     # ignoring different persist modes, as they don't seem to have a big impact on runtime
-    related_benchmark_results = {}
+    with open("data/related_benchmark_log.json", "r") as log:
+        related_benchmark_results = json.load(log)
     for pipeline in RAW_PIPELINES:
         benchmark_results_pipeline = related_benchmark_results.setdefault(pipeline, {})
         for system in RELATED_WORK_PIPELINES.keys():
             benchmark_results_system = benchmark_results_pipeline.setdefault(system, {})
             for sql_flavor in RELATED_WORK_PIPELINES[system]["flavors"]:
+                if benchmark_results_pipeline[sql_flavor] != None:
+                    print(f"cache hit {pipeline} {system} {sql_flavor}")
+                    continue
                 benchmark_results_flavor = benchmark_results_system.setdefault(
                     sql_flavor, {}
                 )
@@ -186,10 +194,11 @@ def main():
                     benchmark_results_flavor,
                     sql_flavor=sql_flavor,
                 )
-    with open("data/related_benchmark_log.json", "a") as log:
-        log.write(json.dumps(related_benchmark_results))
+                with open("data/related_benchmark_log.json", "w") as log:
+                    log.write(json.dumps(related_benchmark_results))
 
-    uda_benchmark_results = {}
+    with open("data/uda_benchmark_results.json", "r") as log:
+        uda_benchmark_results = json.load(log)
     for pipeline in UDA_PIPELINES.keys():
         benchmark_results_type = uda_benchmark_results.setdefault(pipeline, {})
 
@@ -206,7 +215,7 @@ def main():
             benchmark_results_type,
         )
         time_pipeline_execution("original", pipeline_file, benchmark_results_type)
-    with open("data/uda_benchmark_results.json", "a") as log:
+    with open("data/uda_benchmark_results.json", "w") as log:
         log.write(json.dumps(uda_benchmark_results))
 
 
