@@ -22,6 +22,7 @@ PIPELINE_TO_COUNT = {
     "head_very_simple_pipeline.py": 1,
     "head_simple_pipeline.py": 3,
     "head_medium_pipeline.py": 10,
+    "compute_intensive_pipeline.py": 1,
 }
 
 MAP_EXTERNAL_PIPELINE = {
@@ -31,6 +32,7 @@ MAP_EXTERNAL_PIPELINE = {
     "very_simple_pipeline.py": "very_simple_pipeline",
     "simple_pipeline.py": "simple_pipeline",
     "medium_pipeline.py": "medium_pipeline",
+    "compute_intensive_pipeline.py": "hard_pipeline",
 }
 TYPES = ["converted", "original"]  # , "setup"]
 
@@ -50,7 +52,7 @@ def get_all_combinations(log):
                 log_persist_mode = log_pipeline[persist_mode]
                 for sf in SCALE_FACTORS:
                     log_sf = log_persist_mode[str(sf)]
-                    for type in TYPES:
+                    for type in TYPES + ["setup"]:
                         benchmark = log_sf[type]
                         yield {
                             "type": type,
@@ -69,21 +71,171 @@ def get_all_external_combinations(log):
         pipeline_log = log[pipeline]
         for system in RELATED_WORK_PIPELINES.keys():
             system_log = pipeline_log[system]
-            for sf in SCALE_FACTORS:
-                benchmark = system_log[str(sf)][system]
-                yield {
-                    "pipeline": pipeline,
-                    "sf": sf,
-                    "system": system,
-                    "count": PIPELINE_TO_COUNT[pipeline],
-                    "runtimes": benchmark["times"],
-                    "med": benchmark["med"],
-                }
+            for flavor in system_log.keys():
+                flavor_log = system_log[flavor]
+                for sf in SCALE_FACTORS:
+                    benchmark = flavor_log[str(sf)][system]
+                    yield {
+                        "pipeline": pipeline,
+                        "sf": sf,
+                        "system": system,
+                        "count": PIPELINE_TO_COUNT[pipeline],
+                        "runtimes": benchmark["times"],
+                        "med": benchmark["med"],
+                    }
+
+
+def plot_uda_scales():
+    uda_log = load_log("data/uda_benchmark_results.json")
+    r = np.arange(len(SCALE_FACTORS))
+    width = 0.4
+
+    bars_per_point = 2
+    bars = []
+    labels = TYPES + ["setup"]
+
+    for type in TYPES + ["setup"]:
+        runtimes = []
+        for sf in SCALE_FACTORS:
+            runtimes.append(uda_log["uda_simple_pipeline.py"][str(sf)][type]["med"])
+        bars.append(runtimes)
+
+    # add setup times to converted:
+    for i in range(len(SCALE_FACTORS)):
+        bars[0][i] += bars[2][i]
+    bar_references = []
+    bar_width = width / bars_per_point
+    offset = (bars_per_point - 1) * bar_width / 2
+
+    for i, bar in zip([0, 1, 0], bars):
+
+        bar_references.append(plt.bar(r + bar_width * i - offset, bar, bar_width))
+    plt.xticks(r, SCALE_FACTORS)
+    plt.xlabel("Scalefactor")
+    plt.ylabel("Seconds")
+    plt.yscale("log")
+    plt.legend(bar_references, labels)
+    plt.title(f"UDA converted vs original e2e runtimes")
+    plt.savefig(f"src/plots/uda_runtimes_end_to_end.png")
+    plt.show()
+
+
+def plot_compute_intense(log):
+
+    r = np.arange(len(SCALE_FACTORS))
+    width = 0.4
+
+    bars_per_point = 2
+    bars = []
+    labels = TYPES + ["setup"]
+
+    for type in TYPES + ["setup"]:
+        runtimes = []
+        for sf in SCALE_FACTORS:
+            runtimes.append(
+                log["to_sql"]["compute_intensive_pipeline.py"]["MATERIALIZED_VIEW"][
+                    str(sf)
+                ][type]["med"]
+            )
+        bars.append(runtimes)
+
+    # add setup times to converted:
+    for i in range(len(SCALE_FACTORS)):
+        bars[0][i] += bars[2][i]
+    bar_references = []
+    bar_width = width / bars_per_point
+    offset = (bars_per_point - 1) * bar_width / 2
+
+    for i, bar in zip([0, 1, 0], bars):
+
+        bar_references.append(plt.bar(r + bar_width * i - offset, bar, bar_width))
+    plt.xticks(r, SCALE_FACTORS)
+    plt.xlabel("Scalefactor")
+    plt.ylabel("Seconds")
+    plt.yscale("log")
+    plt.legend(bar_references, labels)
+    plt.title(f"Compute intensive e2e runtimes")
+    plt.savefig(f"src/plots/compute_intensive_end_to_end.png")
+    plt.show()
+
+
+def plot_ms_sql(log, log_original):
+
+    r = np.arange(len(SCALE_FACTORS))
+    width = 0.4
+
+    bars_per_point = 3
+    bars = []
+    labels = [
+        "1 UDF",
+        "1 UDF original",
+        "3 UDF",
+        "3 UDF original",
+        "10 UDF",
+        "10 UDF original",
+    ]
+
+    original_mapping = {
+        "very_simple_pipeline": "head_very_simple_pipeline.py",
+        "simple_pipeline": "head_simple_pipeline.py",
+        "medium_pipeline": "head_medium_pipeline.py",
+    }
+    for pipeline in RAW_PIPELINES:
+        runtimes = []
+        runtimes_original = []
+        for sf in SCALE_FACTORS:
+            runtimes.append(log[PIPELINE_TO_COUNT[pipeline]][pipeline][sf])
+            runtimes_original.append(
+                log_original["head"]["NONE"][PIPELINE_TO_COUNT[pipeline]][
+                    original_mapping[pipeline]
+                ]["original"][sf]
+            )
+        bars.append(runtimes)
+        bars.append(runtimes_original)
+
+    bar_references = []
+    bar_width = width / bars_per_point
+    offset = (bars_per_point - 1) * bar_width / 2
+
+    for i, bar in enumerate(bars):
+        bar_references.append(plt.bar(r + bar_width * i - offset, bar, bar_width))
+    plt.xticks(r, SCALE_FACTORS)
+    plt.xlabel("Scalefactor")
+    plt.ylabel("Seconds")
+    plt.yscale("log")
+    plt.legend(bar_references, labels)
+    plt.title(f"Microsoft SQL runtimes at different UDF counts")
+    plt.savefig(f"src/plots/Microsoft_SQL_SERVER.png")
+    plt.show()
+
+
+def plot_loc():
+    r = np.arange(1)
+    width = 0.1
+
+    bars_per_point = 3
+    bars = []
+    labels = ["benchmark", "converter", "visualize"]
+
+    bars = [[890], [319], [394]]
+    bar_references = []
+    bar_width = width / bars_per_point
+    offset = (bars_per_point - 1) * bar_width / 2
+
+    for i, bar in enumerate(bars):
+        bar_references.append(plt.bar(r + bar_width * i - offset, bar, bar_width))
+    plt.xticks(r, [1])
+    plt.xlabel("")
+    plt.ylabel("LOC")
+    plt.legend(bar_references, labels)
+    plt.title(f"LOC for different parts of the system")
+    plt.savefig(f"src/plots/loc.png")
+    plt.show()
 
 
 if __name__ == "__main__":
-    log = load_log("data/benchmark.json")
-    grizzly_log = load_log("data/external_benchmark.json")
+    log = load_log("data/benchmark_log.json")
+    grizzly_log = load_log("data/related_benchmark_log.json")
 
     runtimes_on_scalefactor_by_udf = {}
     for benchmark in get_all_combinations(log):
@@ -102,6 +254,7 @@ if __name__ == "__main__":
     grizzly_runtimes_on_scalefactor_by_udf = {}
     native_runtimes_on_scalefactor_by_udf = {}
     scan_runtimes_on_scalefactor_by_udf = {}
+    ms_sql_runtimes_on_scalefactor = {}
     for benchmark in get_all_external_combinations(grizzly_log):
         if benchmark["system"] == "grizzly":
             grizzly_runtimes_on_scalefactor_by_udf.setdefault(
@@ -115,15 +268,18 @@ if __name__ == "__main__":
             ).setdefault(benchmark["pipeline"], {}).setdefault(
                 benchmark["sf"], benchmark["med"]
             )
-        if benchmark["system"] == "scan":
+        if benchmark["system"] == "scan_table_materialize":
             scan_runtimes_on_scalefactor_by_udf.setdefault(
                 benchmark["count"], {}
             ).setdefault(benchmark["pipeline"], {}).setdefault(
                 benchmark["sf"], benchmark["med"]
             )
-
-    print(runtimes_on_scalefactor_by_udf)
-    print(grizzly_runtimes_on_scalefactor_by_udf)
+        if benchmark["system"] == "sql_server_translated":
+            ms_sql_runtimes_on_scalefactor.setdefault(
+                benchmark["count"], {}
+            ).setdefault(benchmark["pipeline"], {}).setdefault(
+                benchmark["sf"], benchmark["med"]
+            )
 
     r = np.arange(len(SCALE_FACTORS))
     width = 0.6
@@ -203,7 +359,7 @@ if __name__ == "__main__":
                     bars_per_point += 1
             if df_command == "to_sql":
                 bars, labels = zip(
-                    *sorted(zip(bars, labels), key=lambda x: x[0]["name"])
+                    *sorted(zip(bars, labels), key=lambda x: x[0]["data"][-1])
                 )
 
             bar_references = []
@@ -225,3 +381,7 @@ if __name__ == "__main__":
                 f"src/plots/{df_command}_runtimes_{PIPELINE_TO_COUNT[pipeline]}_UDF.png"
             )
             plt.show()
+    plot_uda_scales()
+    plot_compute_intense(log)
+    plot_loc()
+    plot_ms_sql(ms_sql_runtimes_on_scalefactor, runtimes_on_scalefactor_by_udf)
