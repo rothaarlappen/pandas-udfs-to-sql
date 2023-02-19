@@ -235,7 +235,7 @@ def plot_loc():
 
 if __name__ == "__main__":
     log = load_log("data/benchmark_log.json")
-    grizzly_log = load_log("data/related_benchmark_log.json")
+    related_log = load_log("data/related_benchmark_log.json")
 
     runtimes_on_scalefactor_by_udf = {}
     for benchmark in get_all_combinations(log):
@@ -255,7 +255,7 @@ if __name__ == "__main__":
     native_runtimes_on_scalefactor_by_udf = {}
     scan_runtimes_on_scalefactor_by_udf = {}
     ms_sql_runtimes_on_scalefactor = {}
-    for benchmark in get_all_external_combinations(grizzly_log):
+    for benchmark in get_all_external_combinations(related_log):
         if benchmark["system"] == "grizzly":
             grizzly_runtimes_on_scalefactor_by_udf.setdefault(
                 benchmark["count"], {}
@@ -289,7 +289,7 @@ if __name__ == "__main__":
             bars_per_point = 0
             bars = []
             labels = []
-            if df_command == "to_sql":
+            if df_command == "to_sql" and pipeline != "compute_intensive_pipeline.py":
                 bars.append(
                     {
                         "data": np.asarray(
