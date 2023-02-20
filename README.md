@@ -9,22 +9,33 @@ where SCRIPT is equal to the to be converted file (e.g. simple_pipeline.py) and 
 NEW_TABLE (runtimes don't seem to differ much).
 
 # Benchmarks
-The benchmark requires the following environment variables (e.g. exposed in a .env file):  
+The benchmark requires the following environment variables (e.g. exposed in a .env file):
 
 ```
 pg_scalefactor="0.01"
 db_scalefactor='0.01'
 
-# specifies which server you want to use: either "postgresql" or "sqlserver" 
+# specifies which server you want to use: either "postgresql" or "sqlserver"
 flavor="sqlserver"
 
 # required for postgres-baseline/grizzly/translated pipelines (materialized view/new table)
-pg_pw="<postgres_server_password>" 
-pg_host="<postgres_server_ip>" 
-pg_user="<postgres_user_name>" 
+pg_pw="<postgres_server_password>"
+pg_host="<postgres_server_ip>"
+pg_user="<postgres_user_name>"
 
 # required for sqlserver-baseline/sqlserver translated pipelines
 sqlserver_pw="<sqlserver_password>"
 sqlserver_host="<sqlserver_host>" # "localhost" or ip
 sqlserver_user="<sqlserver_user>" # most likely "SA"
 ```
+
+# Setup
+
+To install all required Python dependencies run:
+
+`pip install -r requirements.txt`
+
+For visualization you further need to run:
+
+`apt install cm-super dvipng`
+`apt install msttcorefonts -qq`

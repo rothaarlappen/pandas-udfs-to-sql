@@ -8,3 +8,4 @@ grizzly-sql
 pyyaml
 matplotlib
 np
+SciencePlots
